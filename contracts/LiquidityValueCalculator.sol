@@ -26,7 +26,6 @@ contract LiquidityValueCalculator is ILiquidityValueCalculator {
             UniswapV2Library.pairFor(factory, tokenA, tokenB)
         );
         totalSupply = pair.totalSupply();
-        console.log(totalSupply);
         (uint256 reserves0, uint256 reserves1, ) = pair.getReserves();
         (reserveA, reserveB) = tokenA == pair.token0()
             ? (reserves0, reserves1)
@@ -34,10 +33,29 @@ contract LiquidityValueCalculator is ILiquidityValueCalculator {
     }
 
     function computeLiquidityShareValue(
-        uint256 liquidty,
+        uint256 liquidity,
         address tokenA,
         address tokenB
-    ) external override returns (uint256 tokenAAmount, uint256 tokenBAmount) {
-        revert("TODO");
+    )
+        external
+        view
+        override
+        returns (uint256 tokenAAmount, uint256 tokenBAmount)
+    {
+        (uint256 reservesA, uint256 reservesB, uint256 totalSupply) = pairInfo(
+            tokenA,
+            tokenB
+        );
+        console.log(
+            "Reserves A: %s; Reserves B: %s; Total Supply: %s",
+            reservesA,
+            reservesB,
+            totalSupply
+        );
+        uint256 x = liquidity > totalSupply
+            ? (liquidity / totalSupply)
+            : (totalSupply / liquidity);
+        tokenAAmount = reservesA / x;
+        tokenBAmount = reservesB / x;
     }
 }
