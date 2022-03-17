@@ -83,7 +83,7 @@ describe("Swap", function () {
   it("should swap tokens given ETH", async function () {
     const [owner] = await ethers.getSigners();
     const amountIn = ethers.utils.parseEther("1");
-    const slippageTolerance = new Percent("50", "10000");
+    const slippageTolerance = new Percent("5000", "10000");
     const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
 
     const route = new Route([pair], WETH[DAI.chainId]);
@@ -92,7 +92,7 @@ describe("Swap", function () {
       new TokenAmount(WETH[DAI.chainId], amountIn.toString()),
       TradeType.EXACT_INPUT
     );
-    const path = [WETH[DAI.chainId].address, DAIAddress];
+    const path = [ETHAddress, DAIAddress];
 
     const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
