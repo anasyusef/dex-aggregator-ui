@@ -11,130 +11,102 @@ import {
   TradeType,
   WETH,
 } from "@uniswap/sdk";
-import UniswapRouterV2Abi from "../abis/UniswapV2Router02.json";
+import { Swap, UniswapV2Adapter } from "../typechain";
 
 const provider = waffle.provider;
 
 describe("Swap", function () {
-  it("Should return the assigned factory address", async function () {
-    const [owner] = await ethers.getSigners();
-    const uniswapFactoryAddress = ethers.utils.getAddress(
-      "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"
-    );
-    console.log(
-      `Owner's balance: ${ethers.utils.formatEther(await owner.getBalance())}`
-    );
-    const LiquidityValueCalculator = await ethers.getContractFactory(
-      "LiquidityValueCalculator",
-      owner
-    );
-    const liquidityValueCalculator = await LiquidityValueCalculator.deploy(
-      uniswapFactoryAddress
-    );
-    await liquidityValueCalculator.deployed();
+  let swap: Swap;
+  let uniswapV2Adapter: UniswapV2Adapter;
+  let uniswapV2RouterAddress: string;
+  let sushiswapRouterAddress: string;
 
-    expect(await liquidityValueCalculator.factory()).to.equal(
-      uniswapFactoryAddress
-    );
+  let shibaswapRouterAddress: string;
 
-    const DAI = ethers.utils.getAddress(
-      "0x6B175474E89094C44Da98b954EedeAC495271d0F"
-    );
+  const chainId = ChainId.MAINNET;
+  const DAIAddress = ethers.utils.getAddress(
+    "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+  );
+  const ETHAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+  const dead = "0x000000000000000000000000000000000000dEaD";
+  const DAI = new Token(chainId, DAIAddress, 18);
 
-    const LINK = ethers.utils.getAddress(
-      "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-    );
-
-    const [tokenAAmount, tokenBAmount] =
-      await liquidityValueCalculator.computeLiquidityShareValue(
-        ethers.utils.parseUnits("999"),
-        DAI,
-        LINK
-      );
-
-    console.log(
-      ethers.utils.formatUnits(tokenAAmount.toString()).toString(),
-      ethers.utils.formatUnits(tokenBAmount.toString()).toString()
-    );
-
-    console.log(
-      `Owner's balance: ${ethers.utils.formatEther(await owner.getBalance())}`
-    );
-
-    // const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
-
-    // // wait until the transaction is mined
-    // await setGreetingTx.wait();
-
-    // expect(await greeter.greet()).to.equal("Hola, mundo!");
-  });
-
-  it.only("should swap from eth to token", async function () {
-    const [owner] = await ethers.getSigners();
+  this.beforeEach(async function () {
+    // Deploy contract
     const Swap = await ethers.getContractFactory("Swap");
-    const swap = await Swap.deploy(
-      "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+    const UniswapV2Adapter = await ethers.getContractFactory(
+      "UniswapV2Adapter"
     );
+    swap = await Swap.deploy();
+    uniswapV2Adapter = await UniswapV2Adapter.deploy();
     await swap.deployed();
+    await uniswapV2Adapter.deployed();
 
-    const uniswapV2RouterAddress = ethers.utils.getAddress(
+    // Add useful router addresses
+    uniswapV2RouterAddress = ethers.utils.getAddress(
       "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
     );
-    const sushiswapRouterAddress = ethers.utils.getAddress(
+    sushiswapRouterAddress = ethers.utils.getAddress(
       "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
     );
 
-    const shibaswapRouterAddress = ethers.utils.getAddress(
+    shibaswapRouterAddress = ethers.utils.getAddress(
       "0x03f7724180AA6b939894B5Ca4314783B0b36b329"
     );
 
-    await swap.addRouter(0, uniswapV2RouterAddress);
-    await swap.addRouter(1, sushiswapRouterAddress);
-    await swap.addRouter(2, shibaswapRouterAddress);
+    const adaptersRouters = [
+      {
+        adapterAddress: uniswapV2Adapter.address,
+        routers: [
+          uniswapV2RouterAddress,
+          sushiswapRouterAddress,
+          shibaswapRouterAddress,
+        ],
+      },
+    ];
 
-    expect(await swap.getRouter(0)).to.equal(uniswapV2RouterAddress);
-    const DAIAddress = ethers.utils.getAddress(
-      "0x6B175474E89094C44Da98b954EedeAC495271d0F"
-    );
+    for (let i = 0; i < adaptersRouters.length; i++) {
+      await swap.registerAdapter(i, adaptersRouters[i].adapterAddress);
 
-    const chainId = ChainId.MAINNET;
-    const DAI = new Token(chainId, DAIAddress, 18);
+      // Register routers for adapters to use
+      for (let j = 0; j < adaptersRouters[i].routers.length; j++) {
+        await uniswapV2Adapter.registerRouter(j, adaptersRouters[i].routers[j]);
+      }
+    }
+  });
+  it("should swap from eth to token", async function () {
+    await expect(
+      swap.singleSwap(999, 999, 0, 0, [dead, dead], dead, 0)
+    ).revertedWith("Adapter not registered");
+  });
 
+  it("should swap tokens given ETH", async function () {
+    const [owner] = await ethers.getSigners();
+    const amountIn = ethers.utils.parseEther("1");
+    const slippageTolerance = new Percent("50", "10000");
     const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
+
     const route = new Route([pair], WETH[DAI.chainId]);
-    const amountIn = ethers.utils.parseEther("10");
     const trade = new Trade(
       route,
-      new TokenAmount(WETH[DAI.chainId], amountIn.toBigInt()),
+      new TokenAmount(WETH[DAI.chainId], amountIn.toString()),
       TradeType.EXACT_INPUT
     );
-    const path = [WETH[DAI.chainId].address, DAI.address];
-    const deadline = Math.floor(Date.now() / 1000) + 120;
-    const slippageTolerance = new Percent("50", "10000");
-    const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw;
-    const tx = await swap.swapExactETHForTokens(
-      2,
+    const path = [WETH[DAI.chainId].address, DAIAddress];
+
+    const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    await swap.singleSwap(
+      0,
+      0,
+      amountIn,
       amountOutMin.toString(),
-      owner.address,
       path,
+      owner.address,
       deadline,
       {
         value: amountIn,
       }
-    );
-    await tx.wait();
-
-    const DAIAbi = new ethers.utils.Interface([
-      "function balanceOf(address account) external view returns (uint256)",
-    ]);
-    const DAIContract = new ethers.Contract(DAI.address, DAIAbi, owner);
-    console.log(
-      ethers.utils.formatUnits(await DAIContract.balanceOf(owner.address), 18)
-    );
-    // const contractBalance = await provider.getBalance(swap.address);
-    // console.log(ethers.utils.formatEther(contractBalance));
-    console.log(
-      `Owner's balance: ${ethers.utils.formatEther(await owner.getBalance())}`
     );
   });
 });
