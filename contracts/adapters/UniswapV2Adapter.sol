@@ -39,8 +39,21 @@ contract UniswapV2Adapter is AdapterStorage, IAdapter {
             );
 
             console.log(amounts[0], amounts[1]);
+            console.log(address(this).balance);
+        } else {
+            console.log("Swapping Token to Token");
+            IERC20 tokenToSell = IERC20(path[0]);
+            console.log("Approving ERC20...");
+            assert(tokenToSell.approve(address(router), amountIn));
+            uint256[] memory amounts = router.swapExactTokensForTokens(
+                amountIn,
+                amountOutMin,
+                path,
+                to,
+                deadline
+            );
+            console.log(amounts[0], amounts[1]);
         }
-        // Here, there is no ETH, so use tokensforTokens
     }
 
     receive() external payable {
