@@ -11,13 +11,14 @@ import {
   TradeType,
   WETH,
 } from "@uniswap/sdk";
-import { IERC20, Swap, UniswapV2Adapter } from "../typechain";
+import { Utils, IERC20, Swap, UniswapV2Adapter } from "../typechain";
 
 const provider = waffle.provider;
 
 describe("Swap", function () {
   let swap: Swap;
   let uniswapV2Adapter: UniswapV2Adapter;
+  let utils: Utils;
   let DAIContract: IERC20;
   let USDCContract: IERC20;
   let uniswapV2RouterAddress: string;
@@ -46,14 +47,27 @@ describe("Swap", function () {
     // Deploy contract
     DAIContract = await ethers.getContractAt("IERC20", DAIAddress);
     USDCContract = await ethers.getContractAt("IERC20", USDCAddress);
+    const Utils = await ethers.getContractFactory("Utils");
+    utils = await Utils.deploy();
+    await utils.deployed();
     const Swap = await ethers.getContractFactory("Swap");
     const UniswapV2Adapter = await ethers.getContractFactory(
       "UniswapV2Adapter"
     );
+    // const ExampleContract = await ethers.getContractFactory("ExampleContract");
+    // exampleContract = await ExampleContract.deploy();
     swap = await Swap.deploy();
-    uniswapV2Adapter = await UniswapV2Adapter.deploy();
+    uniswapV2Adapter = await UniswapV2Adapter.deploy(swap.address);
     await swap.deployed();
+    console.log(`Swap contract deployed at: ${swap.address}`);
     await uniswapV2Adapter.deployed();
+    console.log(
+      `UniswapV2Adapter contract deployed at: ${uniswapV2Adapter.address}`
+    );
+    // await exampleContract.deployed();
+    // console.log(
+    //   `ExampleContract contract deployed at: ${exampleContract.address}`
+    // );
 
     // Add useful router addresses
     uniswapV2RouterAddress = ethers.utils.getAddress(
@@ -83,6 +97,7 @@ describe("Swap", function () {
 
       // Register routers for adapters to use
       for (let j = 0; j < adaptersRouters[i].routers.length; j++) {
+        // console.log(`Index: ${j} - Address: ${adaptersRouters[i].routers[j]}`);
         await uniswapV2Adapter.registerRouter(j, adaptersRouters[i].routers[j]);
       }
     }
@@ -112,7 +127,6 @@ describe("Swap", function () {
     const path2 = [DAIAddress, USDCAddress];
     const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
-    console.log(amountOutMin.toString());
     await swap.singleSwap(
       0,
       0,
@@ -130,17 +144,12 @@ describe("Swap", function () {
 
     const trade2 = new Trade(
       route2,
-      new TokenAmount(DAI, DAIBalance.toString()),
-      TradeType.EXACT_INPUT
+      new TokenAmount(USDC, ethers.utils.parseUnits("1000", 6).toString()),
+      TradeType.EXACT_OUTPUT
     );
     const amountOutMin2 = trade2.minimumAmountOut(slippageTolerance).raw;
 
-    await DAIContract.transfer(uniswapV2Adapter.address, DAIBalance);
-
-    const contractBalance = await DAIContract.balanceOf(
-      uniswapV2Adapter.address
-    );
-    console.log(`DAI Contract Balance: ${contractBalance}`);
+    await DAIContract.approve(swap.address, DAIBalance);
     await swap.singleSwap(
       0,
       0,

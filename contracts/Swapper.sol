@@ -2,21 +2,21 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IUniswapV2Pair.sol";
 import "./libraries/UniswapV2Library.sol";
+import "./libraries/Utils.sol";
 import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IWETH.sol";
 import "./interfaces/IAdapter.sol";
+import "./interfaces/ISwapper.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Swap is Ownable {
-    enum SwapType {
-        GIVEN_IN,
-        GIVEN_OUT
-    }
+contract Swapper is Ownable, ISwapper {
+    using SafeERC20 for IERC20;
+
     event Received(address, uint256);
-    // address public immutable WETH;
 
     // Add the library methods
     // using EnumerableMap for EnumerableMap.UintToAddressMap;
@@ -24,25 +24,35 @@ contract Swap is Ownable {
     // Declare a set state variable
     mapping(uint256 => address) public adapters;
 
-    // constructor(address _WETH) {
-    //     WETH = _WETH;
-    // }
-
-    function _swap() internal {}
-
     function singleSwap(
         uint256 adapterId,
         uint256 routerId,
         uint256 amountIn,
-        uint256 amountOutMin,
+        uint256 amountOut,
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external payable {
+    ) external payable override {
         require(adapters[adapterId] != address(0), "Adapter not registered");
         IAdapter adapter = IAdapter(adapters[adapterId]);
-        console.log("Starting the swap");
-        adapter.swap{value: msg.value}(routerId, amountIn, amountOutMin, path, to, deadline);
+        adapter.swap{value: msg.value}(
+            routerId,
+            amountIn,
+            amountOut,
+            path,
+            msg.sender,
+            to,
+            deadline
+        );
+    }
+
+    function transferFrom(
+        IERC20 token,
+        address from,
+        address to,
+        uint256 amount
+    ) external override {
+        token.safeTransferFrom(from, to, amount);
     }
 
     function multiSwap() external payable {}
