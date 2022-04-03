@@ -8,6 +8,6 @@ import "./AdapterStorage.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract UniswapV3Adapter is AdapterStorage, IAdapter {
+contract UniswapV3Adapter {
     
 }

@@ -11,13 +11,14 @@ import {
   TradeType,
   WETH,
 } from "@uniswap/sdk";
-import { Utils, IERC20, Swap, UniswapV2Adapter } from "../typechain";
+import { Utils, IERC20, Swapper, UniswapV2Adapter, Executor } from "../typechain";
 
 const provider = waffle.provider;
 
 describe("Swap", function () {
-  let swap: Swap;
+  let swap: Swapper;
   let uniswapV2Adapter: UniswapV2Adapter;
+  let executor: Executor;
   let utils: Utils;
   let DAIContract: IERC20;
   let USDCContract: IERC20;
@@ -50,13 +51,15 @@ describe("Swap", function () {
     const Utils = await ethers.getContractFactory("Utils");
     utils = await Utils.deploy();
     await utils.deployed();
-    const Swap = await ethers.getContractFactory("Swap");
+    const Swapper = await ethers.getContractFactory("Swapper");
+    const Executor = await ethers.getContractFactory("Executor");
     const UniswapV2Adapter = await ethers.getContractFactory(
       "UniswapV2Adapter"
     );
     // const ExampleContract = await ethers.getContractFactory("ExampleContract");
     // exampleContract = await ExampleContract.deploy();
-    swap = await Swap.deploy();
+    executor = await Executor.deploy();
+    swap = await Swapper.deploy(executor.address);
     uniswapV2Adapter = await UniswapV2Adapter.deploy(swap.address);
     await swap.deployed();
     console.log(`Swap contract deployed at: ${swap.address}`);
@@ -159,6 +162,36 @@ describe("Swap", function () {
       owner.address,
       deadline
     );
-    
+
   });
+
+  it("should forward calls to executor", async function () {
+    const iface = new ethers.utils.Interface(["function swapExactTokensForTokens(uint256 amountIn,uint256 amountOutMin,address[] calldata path,address to,uint256 deadline) external returns (uint256[] memory amounts)"])
+    const [owner] = await ethers.getSigners()
+    
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    const data = iface.encodeFunctionData("swapExactTokensForTokens", [123, 120, [DAIAddress, USDCAddress], owner.address, deadline]);
+    const result = await swap.swap([{ targetAddress: uniswapV2RouterAddress, data: data }])
+    console.log(result);
+
+
+  })
 });
+
+// type OptimalSwap = {
+
+// }
+
+// type RouteT = {
+//   percent: number // Might change to complete number instead of percent
+//   swap: OptimalSwap
+// }
+
+// type Struct = {
+//   srcToken: string,
+//   srcAmount: number,
+//   destToken: string,
+//   destAmount: number,
+//   side: "BUY" | "SELL"
+//   route: RouteT[]
+// }
