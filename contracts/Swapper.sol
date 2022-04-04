@@ -31,18 +31,52 @@ contract Swapper is Ownable, ISwapper {
     // Declare a set state variable
     mapping(uint256 => address) public adapters;
 
-    function singleSwap(
+    enum SwapSide {
+        BUY,
+        SELL
+    }
+
+    struct SingleSwap {
+        uint256 adapterId;
+        uint256 routerId;
+        uint256 amountIn;
+        uint256 amountOut;
+        uint256 deadline;
+        address to;
+    }
+
+    struct SimpleSwap {
+        uint256 adapterId;
+        uint256 routerId;
+        SwapStep swaps;
+        SwapSide side;
+        address to;
+    }
+
+    struct SwapStep {
+        uint256 percent;
+        uint256 amountIn;
+        uint256 amountOut;
+        bytes path;
+        uint256 deadline;
+    }
+
+    /**
+    @notice Swap directly on a single DEX given a path. 100% of the swap goes through the given path
+     */
+    function simpleSwapExactInput(
         uint256 adapterId,
         uint256 routerId,
         uint256 amountIn,
         uint256 amountOut,
-        address[] calldata path,
+        address[] memory path,
         address to,
         uint256 deadline
     ) external payable {
         require(adapters[adapterId] != address(0), "Adapter not registered");
         IAdapter adapter = IAdapter(adapters[adapterId]);
-        adapter.swap{value: msg.value}(
+
+        adapter.swapExactInput{value: msg.value}(
             routerId,
             amountIn,
             amountOut,
@@ -53,26 +87,77 @@ contract Swapper is Ownable, ISwapper {
         );
     }
 
-    // @TODO - Refactor struct
+    function simpleSwapExactInputSingle(
+        uint256 adapterId,
+        uint256 routerId,
+        uint256 amountIn,
+        uint256 amountOut,
+        address srcToken,
+        address destToken,
+        address to,
+        uint256 deadline
+    ) external payable {
+        require(adapters[adapterId] != address(0), "Adapter not registered");
+        IAdapter adapter = IAdapter(adapters[adapterId]);
+        adapter.swapExactInputSingle{value: msg.value}(
+            routerId,
+            amountIn,
+            amountOut,
+            srcToken,
+            destToken,
+            msg.sender,
+            to,
+            deadline
+        );
+    }
+
+    // function simpleSwapExactInput() external payable {
+    //     // TODO
+    // }
+
+    function simpleSwapExactOutput(SimpleSwap memory swapData)
+        external
+        payable
+    {
+        // TODO
+    }
+
+    function multiSwapExactInput() external payable {
+        // TODO
+    }
+
+    function multiSwapExactOutput() external payable {
+        // TODO
+    }
+
+    function multiDexSwapExactInput() external payable {
+        // TODO
+    }
+
+    function multiDexSwapExactOutput() external payable {
+        // TODO
+    }
+
+    /**
+    @todo
+     */
     struct BatchSwapStep {
-        uint adapterId;
-        uint routerId;
+        uint256 adapterId;
+        uint256 routerId;
         address[] path;
     }
 
     struct BatchSwap {
         address srcToken;
         address destToken;
-        uint amountIn;
-        uint amountOutMin;
+        uint256 amountIn;
+        uint256 amountOutMin;
         address to;
-        uint deadline;
+        uint256 deadline;
         BatchSwapStep[] steps;
     }
 
-    function batchSwap() external payable {
-
-    }
+    function batchSwap() external payable {}
 
     // function swap(IExecutor.CallDescription[] calldata calls) external payable {
     //     executor.executeCalls{value: msg.value}(calls);
