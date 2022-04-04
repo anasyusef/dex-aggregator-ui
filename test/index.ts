@@ -198,7 +198,7 @@ describe("Swap", function () {
     expect(receipt.gasUsed.toNumber()).to.be.lessThanOrEqual(162789)
   })
 
-  it("should execute simple swaps from single swap function", async function () {
+  it("should execute simple swaps from WETH to DAI from single swap function", async function () {
     const [owner] = await ethers.getSigners();
     const amountIn = ethers.utils.parseEther("1");
     const slippageTolerance = new Percent("50", "10000");
@@ -222,6 +222,32 @@ describe("Swap", function () {
     const txSingle = await swap.simpleSwapExactInputSingle(0, 0, amountIn, amountOutMin.toString(), WETH[DAI.chainId].address, DAIAddress, owner.address, deadline)
     const receiptMulti = await tx.wait()
     const receiptSingle = await txSingle.wait()
+    console.log(`Swap single: Gas ${receiptSingle.gasUsed.toNumber()} | Swap multi: Gas ${receiptMulti.gasUsed.toNumber()}`)
+    expect(receiptSingle.gasUsed.toNumber()).to.be.lessThan(receiptMulti.gasUsed.toNumber())
+  })
+
+  it("should execute simple swaps from ETH to DAI from single swap function", async function () {
+    const [owner] = await ethers.getSigners();
+    const amountIn = ethers.utils.parseEther("1");
+    const slippageTolerance = new Percent("50", "10000");
+    const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
+
+    const route = new Route([pair], WETH[DAI.chainId]);
+    const trade = new Trade(
+      route,
+      new TokenAmount(WETH[DAI.chainId], amountIn.toString()),
+      TradeType.EXACT_INPUT
+    );
+    const path = [ETHAddress, DAIAddress];
+
+    const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+
+    const tx = await swap.simpleSwapExactInput(0, 0, amountIn, amountOutMin.toString(), path, owner.address, deadline, { value: amountIn })
+    const txSingle = await swap.simpleSwapExactInputSingle(0, 0, amountIn, amountOutMin.toString(), ETHAddress, DAIAddress, owner.address, deadline, { value: amountIn })
+    const receiptMulti = await tx.wait()
+    const receiptSingle = await txSingle.wait()
+    console.log(`Swap single: Gas ${receiptSingle.gasUsed.toNumber()} | Swap multi: Gas ${receiptMulti.gasUsed.toNumber()}`)
     expect(receiptSingle.gasUsed.toNumber()).to.be.lessThan(receiptMulti.gasUsed.toNumber())
   })
 });

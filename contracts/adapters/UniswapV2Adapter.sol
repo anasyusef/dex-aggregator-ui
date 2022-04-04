@@ -71,6 +71,8 @@ contract UniswapV2Adapter is AdapterStorage {
 
         IUniswapV2Router02 router = IUniswapV2Router02(routers[routerId]);
 
+        // TODO - Experiment with removing the wrapping functionality from the adapters and let the swapper contract handle it. That will enable us to remove adapter functions from being payable
+        // Check if that affects gas
         if (srcToken == Utils.ETH) {
             require(msg.value > 0, "Value must be non-zero");
             require(msg.value == amountIn, "Value doesn't match");
