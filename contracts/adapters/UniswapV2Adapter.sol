@@ -26,21 +26,11 @@ contract UniswapV2Adapter is AdapterStorage {
         address from,
         address to,
         uint256 deadline
-    ) external payable returns (uint256[] memory amounts) {
+    ) external returns (uint256[] memory amounts) {
         require(routers[routerId] != address(0), "Router not registered");
-        bool fromETH = false;
-        if (path[0] == Utils.ETH) {
-            require(msg.value > 0, "Value must be non-zero");
-            require(msg.value == amountIn, "Value doesn't match");
-            fromETH = true;
-            IWETH(Utils.WETH).deposit{value: msg.value}();
-            path[0] = Utils.WETH;
-        }
         IUniswapV2Router02 router = IUniswapV2Router02(routers[routerId]);
         IERC20 tokenToSell = IERC20(path[0]);
-        if (!fromETH) {
-            swapper.transferFrom(tokenToSell, from, address(this), amountIn);
-        }
+        swapper.transferFrom(tokenToSell, from, address(this), amountIn);
         assert(tokenToSell.approve(address(router), amountIn));
 
         amounts = router.swapExactTokensForTokens(
@@ -65,25 +55,11 @@ contract UniswapV2Adapter is AdapterStorage {
         address from,
         address to,
         uint256 deadline
-    ) external payable returns (uint256 amountSwapped) {
+    ) external returns (uint256 amountSwapped) {
         require(routers[routerId] != address(0), "Router not registered");
-        bool fromETH = false;
-
         IUniswapV2Router02 router = IUniswapV2Router02(routers[routerId]);
-
-        // TODO - Experiment with removing the wrapping functionality from the adapters and let the swapper contract handle it. That will enable us to remove adapter functions from being payable
-        // Check if that affects gas
-        if (srcToken == Utils.ETH) {
-            require(msg.value > 0, "Value must be non-zero");
-            require(msg.value == amountIn, "Value doesn't match");
-            fromETH = true;
-            IWETH(Utils.WETH).deposit{value: msg.value}();
-            srcToken = Utils.WETH;
-        }
         IERC20 tokenToSell = IERC20(srcToken);
-        if (!fromETH) {
-            swapper.transferFrom(tokenToSell, from, address(this), amountIn);
-        }
+        swapper.transferFrom(tokenToSell, from, address(this), amountIn);
 
         address[] memory path = new address[](2);
         path[0] = address(srcToken);

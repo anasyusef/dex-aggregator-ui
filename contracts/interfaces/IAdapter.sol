@@ -11,7 +11,7 @@ interface IAdapter {
         address from,
         address to,
         uint256 deadline
-    ) external payable;
+    ) external returns (uint256[] memory);
 
     function swapExactInputSingle(
         uint256 routerId,
@@ -22,5 +22,5 @@ interface IAdapter {
         address from,
         address to,
         uint256 deadline
-    ) external payable;
+    ) external returns (uint256);
 }

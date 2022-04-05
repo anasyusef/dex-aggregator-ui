@@ -72,19 +72,24 @@ contract Swapper is Ownable, ISwapper {
         address[] memory path,
         address to,
         uint256 deadline
-    ) external payable {
+    ) external payable returns (uint256[] memory) {
         require(adapters[adapterId] != address(0), "Adapter not registered");
         IAdapter adapter = IAdapter(adapters[adapterId]);
-
-        adapter.swapExactInput{value: msg.value}(
-            routerId,
-            amountIn,
-            amountOut,
-            path,
-            msg.sender,
-            to,
-            deadline
-        );
+        address from;
+        (path[0], from) = _wrapETH(amountIn, path[0]);
+        if (from == address(this)) {
+            assert(IERC20(Utils.WETH).approve(address(adapter), amountIn));
+        }
+        return
+            adapter.swapExactInput(
+                routerId,
+                amountIn,
+                amountOut,
+                path,
+                from,
+                to,
+                deadline
+            );
     }
 
     function simpleSwapExactInputSingle(
@@ -96,24 +101,42 @@ contract Swapper is Ownable, ISwapper {
         address destToken,
         address to,
         uint256 deadline
-    ) external payable {
+    ) external payable returns (uint256) {
         require(adapters[adapterId] != address(0), "Adapter not registered");
         IAdapter adapter = IAdapter(adapters[adapterId]);
-        adapter.swapExactInputSingle{value: msg.value}(
-            routerId,
-            amountIn,
-            amountOut,
-            srcToken,
-            destToken,
-            msg.sender,
-            to,
-            deadline
-        );
+        address from;
+        (srcToken, from) = _wrapETH(amountIn, srcToken);
+        if (from == address(this)) {
+            assert(IERC20(Utils.WETH).approve(address(adapter), amountIn));
+        }
+        return
+            adapter.swapExactInputSingle(
+                routerId,
+                amountIn,
+                amountOut,
+                srcToken,
+                destToken,
+                from,
+                to,
+                deadline
+            );
     }
 
-    // function simpleSwapExactInput() external payable {
-    //     // TODO
-    // }
+    function _wrapETH(uint256 amountToWrap, address tokenInput)
+        internal
+        returns (address tokenOutput, address from)
+    {
+        if (tokenInput == Utils.ETH) {
+            require(msg.value > 0, "Value must be non-zero");
+            require(msg.value == amountToWrap, "Value doesn't match");
+            IWETH(Utils.WETH).deposit{value: msg.value}();
+            tokenOutput = Utils.WETH;
+            from = address(this);
+        } else {
+            tokenOutput = tokenInput;
+            from = msg.sender;
+        }
+    }
 
     function simpleSwapExactOutput(SimpleSwap memory swapData)
         external
