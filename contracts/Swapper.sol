@@ -36,29 +36,19 @@ contract Swapper is Ownable, ISwapper {
         SELL
     }
 
-    struct SingleSwap {
+    struct Swap {
         uint256 adapterId;
         uint256 routerId;
-        uint256 amountIn;
-        uint256 amountOut;
-        uint256 deadline;
-        address to;
-    }
-
-    struct SimpleSwap {
-        uint256 adapterId;
-        uint256 routerId;
-        SwapStep swaps;
-        SwapSide side;
-        address to;
-    }
-
-    struct SwapStep {
+        address[] path;
         uint256 percent;
-        uint256 amountIn;
         uint256 amountOut;
-        bytes path;
         uint256 deadline;
+    }
+
+    struct MultiSwapParams {
+        address to;
+        uint256 amountIn;
+        Swap[] swaps;
     }
 
     /**
@@ -138,15 +128,32 @@ contract Swapper is Ownable, ISwapper {
         }
     }
 
-    function simpleSwapExactOutput(SimpleSwap memory swapData)
-        external
-        payable
-    {
+    function simpleSwapExactOutput() external payable {
         // TODO
     }
 
-    function multiSwapExactInput() external payable {
-        // TODO
+    function multiSwapExactInput(MultiSwapParams memory params)
+        external
+        payable
+    {
+        for (uint256 i = 0; i < params.swaps.length; i++) {
+            Swap memory swapParams = params.swaps[i];
+            require(
+                adapters[swapParams.adapterId] != address(0),
+                "Adapter not registered"
+            );
+            IAdapter adapter = IAdapter(adapters[swapParams.adapterId]);
+            uint256 amountIn = params.amountIn * swapParams.percent;
+            adapter.swapExactInput(
+                swapParams.routerId,
+                amountIn,
+                swapParams.amountOut,
+                swapParams.path,
+                from, // TODO fix from as it depends on the token
+                params.to
+                swapParams.deadline
+            );
+        }
     }
 
     function multiSwapExactOutput() external payable {
