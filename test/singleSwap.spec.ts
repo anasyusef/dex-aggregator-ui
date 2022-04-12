@@ -3,6 +3,7 @@ import { ethers, waffle } from "hardhat";
 import {
   ChainId,
   Fetcher,
+  JSBI,
   Percent,
   Route,
   Token,
@@ -63,6 +64,7 @@ const addresses = {
   DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
   USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
   DEAD: "0x000000000000000000000000000000000000dEaD",
+  USDT: ethers.utils.getAddress("0xdac17f958d2ee523a2206206994597c13d831ec7"),
   ETH: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
   WETH: WETH[1].address,
   UniswapV2Router: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
@@ -140,6 +142,7 @@ describe("Swap", function () {
   const chainId = ChainId.MAINNET;
   const DAI = new Token(chainId, addresses.DAI, 18);
   const USDC = new Token(chainId, addresses.USDC, 6);
+  const USDT = new Token(chainId, addresses.USDT, 6);
   let wallet: Wallet;
   let other: Wallet;
   let loadFixture: ReturnType<typeof createFixtureLoader>;
@@ -346,9 +349,121 @@ describe("Swap", function () {
       receiptMulti.gasUsed.toNumber()
     );
   });
-  it.skip("perform multi swaps on a single dex", async function () {
-    console.log("Hello world");
+  it.only("should perform multi swaps on a single dex", async function () {
+    // Swap ETH to WETH
+    // Swap WETH to USDC via WETH => USDC (40%)
+    // Swap WETH to USDC via WETH => USDT => USDC (30%)
+    // Swap WETH to USDC via WETH => DAI => USDC (30%)
+
+    const path1 = [addresses.WETH, addresses.USDC];
+    const path2 = [addresses.WETH, addresses.USDT, addresses.USDC];
+    const path3 = [addresses.WETH, addresses.DAI, addresses.USDC];
+
+    const amountInEthers = ethers.utils.parseEther("10");
+    const slippageTolerance = new Percent("50", "10000");
+    const WETH_USDT = await Fetcher.fetchPairData(USDT, WETH[DAI.chainId]);
+    const USDT_USDC = await Fetcher.fetchPairData(USDT, USDC);
+    const WETH_USDC = await Fetcher.fetchPairData(USDC, WETH[DAI.chainId]);
+    const WETH_DAI = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
+    const DAI_USDC = await Fetcher.fetchPairData(DAI, USDC);
+    /* eslint-disable camelcase */
+    const WETH_USDC_route = new Route([WETH_USDC], WETH[DAI.chainId]);
+    const WETH_USDT_USDC_route = new Route(
+      [WETH_USDT, USDT_USDC],
+      WETH[DAI.chainId]
+    );
+    const WETH_DAI_USDC_route = new Route(
+      [WETH_DAI, DAI_USDC],
+      WETH[DAI.chainId]
+    );
+    const WETH_USDC_trade = new Trade(
+      WETH_USDC_route,
+      new TokenAmount(
+        WETH[DAI.chainId],
+        amountInEthers.div(100).mul(40).toString()
+      ),
+      TradeType.EXACT_INPUT
+    );
+    const WETH_USDT_USDC_trade = new Trade(
+      WETH_USDT_USDC_route,
+      new TokenAmount(
+        WETH[DAI.chainId],
+        amountInEthers.div(100).mul(30).toString()
+      ),
+      TradeType.EXACT_INPUT
+    );
+    const WETH_DAI_USDC_trade = new Trade(
+      WETH_DAI_USDC_route,
+      new TokenAmount(
+        WETH[DAI.chainId],
+        amountInEthers.div(100).mul(30).toString()
+      ),
+      TradeType.EXACT_INPUT
+    );
+    /* eslint-enable camelcase */
+
+    const [owner] = await ethers.getSigners();
+    const adapterId = 0;
+    const routerId = 0;
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    // WETHContractIWETH.deposit({
+    //   value: amountInEthers,
+    // });
+
+    // await WETHContractIERC20.approve(swap.address, amountInEthers);
+    await swap.multiSwapExactInput(
+      {
+        amountIn: amountInEthers,
+        srcToken: addresses.ETH,
+        destToken: addresses.USDC,
+        swaps: [
+          {
+            adapterId,
+            routerId,
+            percent: "40",
+            amountOut:
+              WETH_USDC_trade.minimumAmountOut(
+                slippageTolerance
+              ).raw.toString(),
+            path: path1,
+            deadline,
+          },
+          {
+            adapterId,
+            routerId,
+            percent: "30",
+            amountOut:
+              WETH_USDT_USDC_trade.minimumAmountOut(
+                slippageTolerance
+              ).raw.toString(),
+            path: path2,
+            deadline,
+          },
+          {
+            adapterId,
+            routerId,
+            percent: "30",
+            amountOut:
+              WETH_DAI_USDC_trade.minimumAmountOut(
+                slippageTolerance
+              ).raw.toString(),
+            path: path3,
+            deadline,
+          },
+        ],
+        to: owner.address,
+      },
+      { value: amountInEthers }
+    );
+
+    const finalBalance = await USDCContract.balanceOf(owner.address);
+    console.log(ethers.utils.formatUnits(finalBalance.toString(), 6));
   });
+
+  it("should perform multi swaps where the fromToken is ETH", async () => {});
+  it("should perform multi swaps where the toToken is ETH", async () => {});
+  it("should not perform multi swaps where ETH is in the middle path", async () => {});
+  it("should perform multi swaps on multiple dexes", async () => {});
 });
 // type OptimalSwap = {
 

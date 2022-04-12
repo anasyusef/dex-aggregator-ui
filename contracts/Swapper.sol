@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: UNLICENSE
 pragma solidity ^0.8.0;
 
 import "./interfaces/IUniswapV2Pair.sol";
@@ -47,6 +48,8 @@ contract Swapper is Ownable, ISwapper {
 
     struct MultiSwapParams {
         address to;
+        address srcToken;
+        address destToken;
         uint256 amountIn;
         Swap[] swaps;
     }
@@ -112,6 +115,11 @@ contract Swapper is Ownable, ISwapper {
             );
     }
 
+    /// @notice Wraps ETH to WETH
+    /// @dev Given a token the function will return the WETH address as the token output if the toke input is ETH
+    /// @param tokenInput Address of the token input
+    /// @param amountToWrap Amount of token input to wrap
+    /// @return tokenOutput will be the same if token input is not WETH, and from address will be the msg.sender if the token input is not WETH
     function _wrapETH(uint256 amountToWrap, address tokenInput)
         internal
         returns (address tokenOutput, address from)
@@ -136,23 +144,55 @@ contract Swapper is Ownable, ISwapper {
         external
         payable
     {
+        address from;
+        address to = params.to;
+        (params.srcToken, from) = _wrapETH(params.amountIn, params.srcToken);
+        if (params.destToken == Utils.ETH) {
+            to = address(this);
+        }
+        require(
+            params.srcToken != Utils.ETH && msg.value > 0,
+            "no value should be sent"
+        );
         for (uint256 i = 0; i < params.swaps.length; i++) {
             Swap memory swapParams = params.swaps[i];
+            uint256 swapParamsPathLength = swapParams.path.length;
             require(
                 adapters[swapParams.adapterId] != address(0),
                 "Adapter not registered"
             );
+            console.log(
+                "Path 0: %s | SrcToken: %s",
+                swapParams.path[0],
+                params.srcToken
+            );
+            require(
+                swapParams.path[swapParamsPathLength - 1] == params.destToken,
+                "destToken doesn't match"
+            );
+
+            // Add checkers on the percentage
+            // require(swapParams.percent > 0 && swapParams.percent <= 100, "percent not valid");
+            uint256 amountIn = (params.amountIn / 100) * swapParams.percent; // TODO - Fix percentage calculation
+            console.log("Amount in: %s", amountIn);
+            console.log("Minimum amount out: %s", swapParams.amountOut);
+            console.log("From address: %s", from);
+            // (swapParams.path[i], from) = _wrapETH(amountIn, swapParams.path[i]); // TODO - Only change to check for the first and last tokens
+            // TODO - Check if ETH is only at the beginning or end, if it's in the middle path then very unlikely that will result in an optimal path
             IAdapter adapter = IAdapter(adapters[swapParams.adapterId]);
-            uint256 amountIn = params.amountIn * swapParams.percent;
             adapter.swapExactInput(
                 swapParams.routerId,
                 amountIn,
                 swapParams.amountOut,
                 swapParams.path,
-                from, // TODO fix from as it depends on the token
-                params.to
+                from,
+                to,
                 swapParams.deadline
             );
+            // TODO emit event
+        }
+        if (params.destToken == Utils.ETH) {
+            // TODO - Calculate Total ETH to send back
         }
     }
 
@@ -160,13 +200,13 @@ contract Swapper is Ownable, ISwapper {
         // TODO
     }
 
-    function multiDexSwapExactInput() external payable {
-        // TODO
-    }
+    // function multiDexSwapExactInput() external payable {
+    //     // TODO
+    // }
 
-    function multiDexSwapExactOutput() external payable {
-        // TODO
-    }
+    // function multiDexSwapExactOutput() external payable {
+    //     // TODO
+    // }
 
     /**
     @todo
@@ -187,7 +227,7 @@ contract Swapper is Ownable, ISwapper {
         BatchSwapStep[] steps;
     }
 
-    function batchSwap() external payable {}
+    // function batchSwap() external payable {}
 
     // function swap(IExecutor.CallDescription[] calldata calls) external payable {
     //     executor.executeCalls{value: msg.value}(calls);

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: UNLICENSE
 pragma solidity ^0.8.0;
 
 import "../interfaces/IAdapter.sol";
@@ -30,6 +31,7 @@ contract UniswapV2Adapter is AdapterStorage {
         require(routers[routerId] != address(0), "Router not registered");
         IUniswapV2Router02 router = IUniswapV2Router02(routers[routerId]);
         IERC20 tokenToSell = IERC20(path[0]);
+        console.log("TokentoSell: %s ; amountIn: %s", address(tokenToSell), amountIn);
         swapper.transferFrom(tokenToSell, from, address(this), amountIn);
         assert(tokenToSell.approve(address(router), amountIn));
 
