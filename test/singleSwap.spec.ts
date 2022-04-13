@@ -452,7 +452,7 @@ describe("Swap", function () {
     );
   });
 
-  it.only("should perform multi swaps where the destination token is ETH", async () => {
+  it.only("should revert when source and destination tokens are ETH", async () => {
     const adapterId = 0;
     const routerId = 0;
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
@@ -493,23 +493,10 @@ describe("Swap", function () {
       )
     ).to.be.revertedWith("src token == dest token");
   });
+  it("should perform multi swaps where the destination token is ETH", async () => {});
   it("should perform multi swaps where the source token is ERC20", async () => {});
   it("should not perform multi swaps where ETH is in the middle path", async () => {});
   it("should perform multi swaps on multiple dexes", async () => {});
-  it("test", async () => {
-    const amountIn = ethers.utils.parseEther("10");
-    const path = [
-      {
-        address: addresses.WETH,
-        decimals: 18,
-      },
-      {
-        address: addresses.USDC,
-        decimals: 6,
-      },
-    ];
-    getMinimumAmountOut({ amountIn, path });
-  });
 });
 // type OptimalSwap = {
 
