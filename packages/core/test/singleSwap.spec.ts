@@ -1,9 +1,6 @@
-import { expect } from "chai";
-import { ethers, waffle } from "hardhat";
 import {
   ChainId,
   Fetcher,
-  JSBI,
   Percent,
   Route,
   Token,
@@ -12,17 +9,19 @@ import {
   TradeType,
   WETH,
 } from "@uniswap/sdk";
+import { expect } from "chai";
+import { BigNumber, Wallet } from "ethers";
+import { ethers, waffle } from "hardhat";
 import {
-  Utils,
+  Executor,
   IERC20,
+  IWETH,
   Swapper,
   UniswapV2Adapter,
-  Executor,
-  IWETH,
+  Utils,
 } from "../typechain";
-import tokens from "./utils/tokens";
-import { BigNumber, Wallet } from "ethers";
 import createUniswapTrade from "./utils/createUniswapTrade";
+import tokens from "./utils/tokens";
 
 const provider = waffle.provider;
 const createFixtureLoader = waffle.createFixtureLoader;
