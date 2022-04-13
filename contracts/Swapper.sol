@@ -19,6 +19,15 @@ contract Swapper is Ownable, ISwapper {
     using SafeERC20 for IERC20;
 
     event Received(address, uint256);
+    event Swap(
+        address indexed sender,
+        address indexed recipient,
+        address srcToken,
+        address destToken,
+        uint256 expectedAmount,
+        uint256 receivedAmount,
+        uint256 percent
+    );
 
     IExecutor public executor;
 
@@ -37,7 +46,7 @@ contract Swapper is Ownable, ISwapper {
         SELL
     }
 
-    struct Swap {
+    struct SwapStep {
         uint256 adapterId;
         uint256 routerId;
         address[] path;
@@ -51,7 +60,7 @@ contract Swapper is Ownable, ISwapper {
         address srcToken;
         address destToken;
         uint256 amountIn;
-        Swap[] swaps;
+        SwapStep[] swaps;
     }
 
     /**
@@ -144,6 +153,7 @@ contract Swapper is Ownable, ISwapper {
         external
         payable
     {
+        require(params.srcToken != params.destToken, "src token == dest token");
         address from;
         address to = params.to;
         (params.srcToken, from) = _wrapETH(params.amountIn, params.srcToken);
@@ -155,7 +165,7 @@ contract Swapper is Ownable, ISwapper {
             "no value should be sent"
         );
         for (uint256 i = 0; i < params.swaps.length; i++) {
-            Swap memory swapParams = params.swaps[i];
+            SwapStep memory swapParams = params.swaps[i];
             uint256 swapParamsPathLength = swapParams.path.length;
             require(
                 adapters[swapParams.adapterId] != address(0),
@@ -180,7 +190,7 @@ contract Swapper is Ownable, ISwapper {
             // (swapParams.path[i], from) = _wrapETH(amountIn, swapParams.path[i]); // TODO - Only change to check for the first and last tokens
             // TODO - Check if ETH is only at the beginning or end, if it's in the middle path then very unlikely that will result in an optimal path
             IAdapter adapter = IAdapter(adapters[swapParams.adapterId]);
-            adapter.swapExactInput(
+            uint256[] memory amounts = adapter.swapExactInput(
                 swapParams.routerId,
                 amountIn,
                 swapParams.amountOut,
@@ -189,7 +199,20 @@ contract Swapper is Ownable, ISwapper {
                 to,
                 swapParams.deadline
             );
-            // TODO emit event
+            console.log("Output amounts...");
+            for (uint256 j = 0; j < amounts.length; j++) {
+                console.log(amounts[i]);
+            }
+            console.log("Emitting event...");
+            emit Swap(
+                msg.sender,
+                params.to,
+                params.srcToken,
+                params.destToken,
+                swapParams.amountOut,
+                amounts[amounts.length - 1],
+                swapParams.percent
+            );
         }
         if (params.destToken == Utils.ETH) {
             // TODO - Calculate Total ETH to send back
