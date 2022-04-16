@@ -1,28 +1,22 @@
+import { Settings as SettingsIcon } from "@mui/icons-material";
 import {
-  Box,
   AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
+  Box,
   Button,
-  Stack,
+  IconButton,
   Menu,
   MenuItem,
+  Stack,
+  Toolbar,
+  Typography,
 } from "@mui/material";
-import { Settings as SettingsIcon } from "@mui/icons-material";
-import { ethers } from "ethers";
-import React, { ChangeEvent, useState, MouseEvent } from "react";
-import Web3 from "web3";
-import Web3Modal, { IProviderOptions } from "web3modal";
+import { MouseEvent, useState } from "react";
 // import { useWeb3 } from "contexts/Web3Provider";
-import WalletConnectProvider from "@walletconnect/web3-provider";
-import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
-import Authereum from "authereum";
-import { useDispatch } from "react-redux";
-import { setup } from "state/web3Slice";
 import { useWeb3 } from "contexts/Web3Provider";
+import { useDispatch } from "react-redux";
+import { getFormattedProviderName } from "utils/provider";
 import WalletButton from "./components/WalletButton";
-import getProviderName from "utils/getProviderName";
+import NetworkSelector from "./components/NetworkSelector";
 
 type Props = {};
 
@@ -96,7 +90,7 @@ export default function TopBar() {
   // console.log(await provider.getBalance(instance.))
   //   };
   if (provider) {
-    console.log(getProviderName(provider.provider));
+    console.log(getFormattedProviderName(provider.provider));
   }
 
   return (
@@ -107,9 +101,7 @@ export default function TopBar() {
             DEX Aggregator
           </Typography>
           <Stack sx={{ mr: 3 }} gap={3} direction={"row"}>
-            <Button variant="outlined" color="inherit">
-              Ethereum
-            </Button>
+            <NetworkSelector />
             <WalletButton />
           </Stack>
           <IconButton

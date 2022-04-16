@@ -23,13 +23,12 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { ExplorerDataType, getExplorerLink } from "utils/getExplorerLink";
-
-const emails = ["username@gmail.com", "user02@gmail.com"];
+import { getFormattedProviderName } from "utils/provider";
+import { ProviderIcon } from "components";
 
 export interface SimpleDialogProps {
   open: boolean;
   onClose: () => void;
-  account: string;
 }
 
 export default function WalletDialog(props: SimpleDialogProps) {
@@ -43,39 +42,40 @@ export default function WalletDialog(props: SimpleDialogProps) {
     <Dialog onClose={handleClose} open={open}>
       <DialogTitle>Account</DialogTitle>
       <DialogContent>
-        <AccountCard account={props.account} />
+        <AccountCard onClose={handleClose} />
       </DialogContent>
     </Dialog>
   );
 }
 
 interface AccountCardProps {
-  account: string;
+  onClose: () => void;
 }
 
-function AccountCard({ account }: AccountCardProps) {
-  const { provider, chainId, disconnect } = useWeb3();
+function AccountCard({ onClose }: AccountCardProps) {
+  const { account, chainId, disconnect, provider } = useWeb3();
   const [copyText, setCopyText] = useState("Copy Address");
-
-  const handleChange = async () => {
-    // await modal.toggleModal;
-  };
-
   const handleDisconnect = () => {
-    // modal.clearCachedProvider()
     disconnect();
+    onClose();
   };
 
+  if (!account) return null;
   return (
     <Card variant="outlined" sx={{ minWidth: 300 }}>
       <CardContent>
-        {/* <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-          Connected with MetaMask
-        </Typography> */}
-        <Stack direction="row" spacing={3} justifyContent="space-between">
-          <Typography variant="h5" sx={{ mb: 1.5 }} color="text.primary">
-            {shortenAddress(account)}
+        {provider && (
+          <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+            Connected with {getFormattedProviderName(provider.provider)}
           </Typography>
+        )}
+        <Stack direction="row" spacing={3} justifyContent="space-between">
+          <Stack direction={"row"} spacing={2}>
+            <ProviderIcon />
+            <Typography variant="h5" sx={{ mb: 1.5 }} color="text.primary">
+              {shortenAddress(account)}
+            </Typography>
+          </Stack>
           <Button
             startIcon={<LogoutIcon />}
             variant="outlined"

@@ -19,6 +19,7 @@ interface IWeb3State {
   provider?: ethers.providers.Web3Provider;
   account?: string;
   chainId?: number;
+  signer?: ethers.providers.JsonRpcSigner;
   isAccountActive: boolean;
   // modal: Web3Modal;
 }
@@ -39,6 +40,7 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
   const [chainId, setChainId] = useState<number>();
   const provider = useRef<ethers.providers.Web3Provider>();
   const web3Modal = useRef<Web3Modal>();
+  const signer = useRef<ethers.providers.JsonRpcSigner>();
   const connector = useRef<any>();
   // const web3Modal = useRef<Web3Modal>()
   const providerOptions: IProviderOptions = useMemo(
@@ -80,11 +82,12 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
 
   const handleConnect = async (connection: any) => {
     const ethersProvider = new ethers.providers.Web3Provider(connection);
+    signer.current = ethersProvider.getUncheckedSigner();
     const account = await ethersProvider.getSigner().getAddress();
     connector.current = connection;
+    provider.current = ethersProvider;
     setAccount(account);
     setChainId(Number(connection.chainId));
-    provider.current = ethersProvider;
     console.log(provider.current.provider instanceof WalletConnectProvider);
   };
 
@@ -172,6 +175,7 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
         isAccountActive: !!account,
         chainId,
         disconnect,
+        signer: signer.current,
       }}
     >
       {children}
