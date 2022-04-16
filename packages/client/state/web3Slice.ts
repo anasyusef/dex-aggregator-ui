@@ -1,18 +1,17 @@
 import { Web3Provider } from "@ethersproject/providers";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { RootState } from "../store";
+import { ethers } from "ethers";
+import type { RootState } from ".";
 
 // Define a type for the slice state
 interface Web3State {
-  provider: Web3Provider | null;
-  address: string | null;
+  // signer: ethers.providers.JsonRpcSigner | null
+  address?: string;
+  balance?: number;
 }
 
 // Define the initial state using that type
-const initialState: Web3State = {
-  provider: null,
-  address: null,
-};
+const initialState: Web3State = {};
 
 export const web3Slice = createSlice({
   name: "web3",
@@ -20,8 +19,9 @@ export const web3Slice = createSlice({
   initialState,
   reducers: {
     setup: (state, action) => {
-      state.provider = action.payload.provider;
+      // state.provider = action.payload.provider;
       state.address = action.payload.address;
+      //   state.address = action.payload.address;
     },
     // decrement: (state) => {
     //   state.value -= 1;
