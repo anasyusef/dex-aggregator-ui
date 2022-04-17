@@ -14,12 +14,14 @@ import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
 import Authereum from "authereum";
 import Web3Modal, { IProviderOptions } from "web3modal";
 import { ethers, providers } from "ethers";
+import { ALL_SUPPORTED_CHAIN_IDS } from "constants/chains";
 
 interface IWeb3State {
   provider?: ethers.providers.Web3Provider;
   account?: string;
   chainId?: number;
   signer?: ethers.providers.JsonRpcSigner;
+  isNetworkSupported: boolean;
   isAccountActive: boolean;
   // modal: Web3Modal;
 }
@@ -88,7 +90,6 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
     provider.current = ethersProvider;
     setAccount(account);
     setChainId(Number(connection.chainId));
-    console.log(provider.current.provider instanceof WalletConnectProvider);
   };
 
   const disconnect = () => {
@@ -109,24 +110,39 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
     setup();
   }, [setup]);
 
+  const connect = useCallback(async () => {
+    try {
+      const web3Modal = getWeb3Modal();
+      const connection = await web3Modal.connect();
+      await handleConnect(connection);
+    } catch (err) {
+      console.log("error:", err);
+    }
+  }, [getWeb3Modal]);
+
   useEffect(() => {
-    console.log(connector);
     if (connector.current) {
       // Subscribe to provider connection
       connector.current.on("accountsChanged", (accounts: string[]) => {
-        console.log(accounts);
         setAccount(accounts[0]);
-        console.log(provider.current?.provider);
       });
 
       // Subscribe to chainId change
-      connector.current.on("chainChanged", (chainId: string) => {
-        setChainId(Number(chainId));
+      connector.current.on("chainChanged", async (chainId: string) => {
+        // setChainId(Number(chainId));
+        // await connect();
+        const numChainId = Number(chainId);
+        if (!ALL_SUPPORTED_CHAIN_IDS.includes(numChainId)) {
+          setChainId(numChainId);
+        } else {
+          window.location.reload();
+        }
       });
 
       // Subscribe to provider connection
-      connector.current.on("connect", (info: { chainId: string }) => {
+      connector.current.on("connect", async (info: { chainId: string }) => {
         setChainId(Number(chainId));
+        // await connect();
       });
 
       // Subscribe to provider disconnection
@@ -143,28 +159,7 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
         // console.log(connector.current.listenerCount());
       }
     };
-  }, [account, chainId]);
-
-  // if (typeof window !== "undefined") {
-  //   console.log("registered")
-  //   getWeb3Modal().on(
-  //     "connect",
-  //     (info: { chainId: number }) => {
-  //       console.log("Connection");
-  //       console.log(info);
-  //     }
-  //   );
-  // }
-
-  async function connect() {
-    try {
-      const web3Modal = getWeb3Modal();
-      const connection = await web3Modal.connect();
-      await handleConnect(connection);
-    } catch (err) {
-      console.log("error:", err);
-    }
-  }
+  }, [account, chainId, connect]);
 
   return (
     <Web3Context.Provider
@@ -176,6 +171,9 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
         chainId,
         disconnect,
         signer: signer.current,
+        isNetworkSupported: chainId
+          ? ALL_SUPPORTED_CHAIN_IDS.includes(chainId)
+          : false,
       }}
     >
       {children}

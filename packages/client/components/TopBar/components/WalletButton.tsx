@@ -4,18 +4,31 @@ import React, { useState } from "react";
 import { shortenAddress } from "utils";
 import { ProviderIcon } from "components";
 import WalletDialog from "./WalletDialog";
+import { CHAIN_INFO } from "constants/chainInfo";
+import ErrorIcon from "@mui/icons-material/Error";
+import { ALL_SUPPORTED_CHAIN_IDS, SupportedChainId } from "constants/chains";
 
 type Props = {};
 
 export default function Wallet({}: Props) {
-  const { connect, isAccountActive, account } = useWeb3();
+  const { connect, isAccountActive, account, chainId, isNetworkSupported } =
+    useWeb3();
   const { formattedBalance } = useNativeCurrencyBalance();
+  const [open, setOpen] = useState(false);
 
   const handleConnect = async () => {
     await connect();
   };
 
-  const [open, setOpen] = useState(false);
+  if (!isNetworkSupported) {
+    return (
+      <Button variant="outlined" startIcon={<ErrorIcon />} color="error">
+        Wrong Network
+      </Button>
+    );
+  }
+
+  const { nativeCurrency } = CHAIN_INFO[chainId || SupportedChainId.MAINNET];
 
   if (!isAccountActive) {
     return (
@@ -37,7 +50,7 @@ export default function Wallet({}: Props) {
           gap={2}
         >
           <Typography variant="button">
-            {Math.round(+formattedBalance * 10) / 10} ETH
+            {Math.round(+formattedBalance * 10) / 10} {nativeCurrency.symbol}
           </Typography>
           {shortenAddress(account as string)}
         </Stack>

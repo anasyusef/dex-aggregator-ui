@@ -1,4 +1,12 @@
-import { Box, Button, Container, Grid, Paper, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import type { NextPage } from "next";
 import { TopBar } from "../components";
 import Web3Provider, { useWeb3 } from "contexts/Web3Provider";
@@ -9,12 +17,12 @@ const Home: NextPage = () => {
       <TopBar />
       <Container maxWidth="sm">
         <Paper
+          variant="outlined"
           sx={{
             pt: 3,
             pb: 6,
             px: 5,
           }}
-          elevation={3}
         >
           <Typography sx={{ mb: 3 }} gutterBottom variant="h6">
             Swap

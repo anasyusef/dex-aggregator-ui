@@ -1,7 +1,8 @@
 import { IWeb3Provider, Web3Context } from "./Web3Provider";
-
+import { Token, TokenAmount } from "@uniswap/sdk";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { BigNumber, BigNumberish, ethers } from "ethers";
+import { CHAIN_INFO } from "constants/chainInfo";
 
 export function useWeb3(): IWeb3Provider {
   const web3Provider = useContext(Web3Context);

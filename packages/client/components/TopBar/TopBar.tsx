@@ -89,9 +89,6 @@ export default function TopBar() {
   // console.log(instance)
   // console.log(await provider.getBalance(instance.))
   //   };
-  if (provider) {
-    console.log(getFormattedProviderName(provider.provider));
-  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
