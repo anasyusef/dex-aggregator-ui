@@ -1,98 +1,48 @@
-import { Settings as SettingsIcon } from "@mui/icons-material";
 import {
   AppBar,
   Box,
-  Button,
   IconButton,
-  Menu,
-  MenuItem,
   Stack,
   Toolbar,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { MouseEvent, useState } from "react";
-// import { useWeb3 } from "contexts/Web3Provider";
-import { useWeb3 } from "contexts/Web3Provider";
+import { useState } from "react";
+import DarkModeOutlined from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlined from "@mui/icons-material/LightModeOutlined";
+import { useTheme } from "@mui/material/styles";
+import { unstable_useEnhancedEffect as useEnhancedEffect } from "@mui/material/utils";
+import { capitalize } from "lodash";
 import { useDispatch } from "react-redux";
-import { getFormattedProviderName } from "utils/provider";
-import WalletButton from "./components/WalletButton";
+import { useAppSelector } from "state";
+import { selectMode, setMode } from "state/userSlice";
 import NetworkSelector from "./components/NetworkSelector";
-
-type Props = {};
+import WalletButton from "./components/WalletButton";
+import { useContext } from "react";
+import { DispatchContext } from "../ThemeProvider";
 
 export default function TopBar() {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { connect, provider } = useWeb3();
   const dispatch = useDispatch();
+  const themeMode = useAppSelector(selectMode);
+  const theme = useTheme();
+  const d = useContext(DispatchContext);
+  const [tooltipLabel, setTooltipLabel] = useState("");
 
-  const handleMenu = (event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  useEnhancedEffect(() => {
+    setTooltipLabel(`${capitalize(themeMode || "light")} mode`);
+  }, [themeMode]);
+
+  const handleChangeThemeMode = () => {
+    // d({
+    //   type: 'CHANGE',
+    //   payload: { paletteMode: theme.palette.mode === "light" ? "dark" : "light" },
+    // });
+    dispatch(setMode(themeMode === "light" ? "dark" : "light"));
   };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleConnect = async () => {
-    // const providerOptions: IProviderOptions = {
-    //     /* See Provider Options Section */
-    //     walletconnect: {
-    //       package: WalletConnectProvider,
-    //       options: {
-    //         infuraId: "7449d8ef8c5946acb839c0f74fcc9036",
-    //       },
-    //     },
-    //     coinbasewallet: {
-    //       package: CoinbaseWalletSDK, // Required
-    //       options: {
-    //         appName: "My Awesome App", // Required
-    //         infuraId: "7449d8ef8c5946acb839c0f74fcc9036", // Required
-    //         rpc: "", // Optional if `infuraId` is provided; otherwise it's required
-    //         chainId: 1, // Optional. It defaults to 1 if not provided
-    //         darkMode: false, // Optional. Use dark theme, defaults to false
-    //       },
-    //     },
-    //     authereum: {
-    //       package: Authereum, // required
-    //     },
-    //   };
-    //   const web3Modal = new Web3Modal({
-    //     network: "mainnet", // optional
-    //     cacheProvider: false, // optional
-    //     providerOptions, // required
-    //   });
-    //   const provider = await web3Modal.connect();
-    //   const web3Provider = new ethers.providers.Web3Provider(provider)
-    //   // console.log(web3Provider.listAccounts())
-    //   const signer = web3Provider.getSigner()
-
-    //   const address = await signer.getAddress();
-
-    //   const balance = await signer.getBalance()
-
-    //   // console.log(await signer.getAddress())
-    //   // console.log(await signer.getBalance())
-    //   // console.log(await signer.getTransactionCount())
-    //   // console.log(await web3Provider.getSigner().getAddress())
-    //   dispatch(setup({ address, balance }))
-    await connect();
-  };
-
-  // const web3Modal = new Web3Modal({
-  //   disableInjectedProvider: false,
-  //   network: "mainnet", // optional
-  //   cacheProvider: false, // optional
-  //   providerOptions, // required
-  // });
-  // const instance = await web3Modal.connect();
-  // const provider = new ethers.providers.Web3Provider(instance)
-  // console.log(instance)
-  // console.log(await provider.getBalance(instance.))
-  //   };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar elevation={0} color="transparent" position="static">
+      <AppBar elevation={0} color="inherit" position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             DEX Aggregator
@@ -101,34 +51,20 @@ export default function TopBar() {
             <NetworkSelector />
             <WalletButton />
           </Stack>
-          <IconButton
-            size="large"
-            aria-label="account of current user"
-            aria-controls="menu-appbar"
-            aria-haspopup="true"
-            onClick={handleMenu}
-            color="inherit"
-          >
-            <SettingsIcon />
-          </IconButton>
-          <Menu
-            id="menu-appbar"
-            anchorEl={anchorEl}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "right",
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "right",
-            }}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-          >
-            <MenuItem onClick={handleClose}>Profile</MenuItem>
-            <MenuItem onClick={handleClose}>My account</MenuItem>
-          </Menu>
+          <Tooltip aria-label={tooltipLabel} title={tooltipLabel}>
+            <IconButton
+              disabled
+              size="large"
+              onClick={handleChangeThemeMode}
+              color="inherit"
+            >
+              {theme.palette.mode === "dark" ? (
+                <DarkModeOutlined />
+              ) : (
+                <LightModeOutlined />
+              )}
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </AppBar>
     </Box>
