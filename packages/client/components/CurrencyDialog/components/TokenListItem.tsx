@@ -1,42 +1,33 @@
-import { useState } from "react";
+import TokenIcon from "@/components/TokenIcon";
 import {
-  ListItemButton,
   ListItemAvatar,
-  Avatar,
+  ListItemButton,
+  ListItemSecondaryAction,
   ListItemText,
   Typography,
-  ListItemSecondaryAction,
 } from "@mui/material";
-import Image from "next/image";
-import { TokenInfo } from "@uniswap/token-lists";
+import { useState } from "react";
 import parseIPFSURI from "utils/parseIPFSURI";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 
 interface Props {
   logoURI?: string;
-  address: string;
   symbol: string;
+  disabled?: boolean;
+  onClick: () => void;
 }
 
-export default function TokenListItem({ logoURI, address, symbol }: Props) {
+export default function TokenListItem({
+  onClick,
+  logoURI,
+  disabled,
+  symbol,
+}: Props) {
   const [error, setError] = useState(false);
   const SIZE = 30;
   return (
-    <ListItemButton sx={{ px: 2 }}>
+    <ListItemButton disabled={disabled} onClick={onClick} sx={{ px: 2 }}>
       <ListItemAvatar>
-        <Avatar sx={{ height: SIZE, width: SIZE }}>
-          {error || !logoURI ? (
-            <QuestionMarkIcon color="disabled" />
-          ) : (
-            <Image
-              layout="fill"
-              src={parseIPFSURI(logoURI ?? "")}
-              alt={symbol}
-              onError={() => setError(true)}
-            />
-          )}
-        </Avatar>
+        <TokenIcon size={SIZE} logoURI={logoURI} symbol={symbol} />
       </ListItemAvatar>
       <ListItemText
         primary={<Typography variant="button">{symbol}</Typography>}

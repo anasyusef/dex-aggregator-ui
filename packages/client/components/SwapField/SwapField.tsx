@@ -1,19 +1,35 @@
-import { Paper, Stack, InputBase, Button, Grid } from "@mui/material";
-import React, { ChangeEvent } from "react";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { useState } from "react";
+import { Button, Grid, InputBase, Paper } from "@mui/material";
+import { TokenInfo } from "@uniswap/token-lists";
+import { CurrencyDialog, TokenIcon } from "components";
+import { ChangeEvent, useState } from "react";
 
-type Props = {};
+type Props = {
+  otherTokenSelected?: TokenInfo;
+  selectedToken?: TokenInfo;
+  onTokenSelect: (token: TokenInfo) => void;
+};
 
-export default function SwapField({}: Props) {
+export default function SwapField({
+  otherTokenSelected,
+  selectedToken,
+  onTokenSelect,
+}: Props) {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [open, setOpen] = useState(false);
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     if (!Number.isNaN(+value)) {
       setText(e.target.value);
     }
   };
+
+  const handleSelectToken = (value: TokenInfo) => {
+    setOpen(false);
+    onTokenSelect(value);
+  };
+
   return (
     <Paper
       sx={{
@@ -72,13 +88,30 @@ export default function SwapField({}: Props) {
         >
           <Button
             endIcon={<KeyboardArrowDownIcon />}
+            onClick={() => setOpen(true)}
+            startIcon={
+              selectedToken && (
+                <TokenIcon
+                  key={selectedToken.address}
+                  size={30}
+                  symbol={selectedToken.symbol}
+                  logoURI={selectedToken.logoURI}
+                />
+              )
+            }
             // fullWidth
             variant="contained"
           >
-            <Stack>Select a token</Stack>
+            {selectedToken ? selectedToken.symbol : "Select a token"}
           </Button>
         </Grid>
       </Grid>
+      <CurrencyDialog
+        selectedToken={otherTokenSelected}
+        onSelectToken={handleSelectToken}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </Paper>
   );
 }

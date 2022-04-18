@@ -6,16 +6,14 @@ import {
 } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import List from "@mui/material/List";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
 import { TokenInfo } from "@uniswap/token-lists";
-import * as React from "react";
-import Image from "next/image";
-import { useWeb3 } from "contexts/Web3Provider";
 import { SupportedChainId } from "constants/chains";
-import TokenListItem from "./TokenListItem";
+import { useWeb3 } from "contexts/Web3Provider";
 import useDebounce from "hooks/useDebounce";
+import * as React from "react";
+import TokenListItem from "./TokenListItem";
 
 function generate(items: number, element: React.ReactElement) {
   return Array(items)
@@ -27,20 +25,6 @@ function generate(items: number, element: React.ReactElement) {
       })
     );
 }
-
-type Props = {
-  isLoading: boolean;
-  searchTerm: string;
-} & (
-  | {
-      isSuccess: true;
-      data: TokenInfo[];
-    }
-  | {
-      isSuccess: false;
-      data: undefined;
-    }
-);
 
 interface IGetTokens {
   chainId?: number;
@@ -69,14 +53,36 @@ function getTokens({
   });
 }
 
+type Props = {
+  isLoading: boolean;
+  searchTerm: string;
+  onTokenItemClick: (value: TokenInfo) => void;
+  selectedToken?: TokenInfo;
+} & (
+  | {
+      isSuccess: true;
+      data: TokenInfo[];
+    }
+  | {
+      isSuccess: false;
+      data: undefined;
+    }
+);
+
 export default function TokensList({
   isLoading,
   isSuccess,
   data,
   searchTerm,
+  selectedToken,
+  onTokenItemClick,
 }: Props) {
   let { chainId, isAccountActive, isNetworkSupported } = useWeb3();
   const debouncedSearchTerm = useDebounce(searchTerm, 100);
+
+  const handleTokenItemClick = (value: TokenInfo) => {
+    onTokenItemClick(value);
+  };
 
   if (isLoading) {
     return (
@@ -121,6 +127,13 @@ export default function TokensList({
       <List>
         {tokens.map((value) => (
           <TokenListItem
+            disabled={
+              selectedToken
+                ? selectedToken.address.toLowerCase() ===
+                  value.address.toLowerCase()
+                : false
+            }
+            onClick={() => handleTokenItemClick(value)}
             key={value.address}
             address={value.address}
             logoURI={value.logoURI}

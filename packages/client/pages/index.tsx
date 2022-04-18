@@ -13,11 +13,22 @@ import {
   useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
+import { useState } from "react";
 import { CurrencyDialog, TopBar } from "../components";
+import { TokenInfo } from "@uniswap/token-lists";
 
 const Home: NextPage = () => {
   const theme = useTheme();
-  console.log({ theme: theme.palette.mode });
+  const [open, setOpen] = useState(false);
+
+  const [token0, setToken0] = useState<TokenInfo>();
+  const [token1, setToken1] = useState<TokenInfo>();
+
+  const handleSwapTokenPositions = () => {
+    setToken0(token1);
+    setToken1(token0);
+  };
+
   return (
     <BrandingProvider>
       <TopBar />
@@ -44,15 +55,27 @@ const Home: NextPage = () => {
           </Stack>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <SwapField />
+              <SwapField
+                otherTokenSelected={token1}
+                onTokenSelect={(val) => setToken0(val)}
+                selectedToken={token0}
+              />
             </Grid>
             <Grid display={"flex"} justifyContent={"center"} item xs={12}>
-              <IconButton color="primary" size="large">
+              <IconButton
+                onClick={handleSwapTokenPositions}
+                color="primary"
+                size="large"
+              >
                 <SwapVertIcon />
               </IconButton>
             </Grid>
             <Grid item xs={12}>
-              <SwapField />
+              <SwapField
+                otherTokenSelected={token0}
+                onTokenSelect={(val) => setToken1(val)}
+                selectedToken={token1}
+              />
             </Grid>
             <Grid item xs={12}>
               <Button fullWidth variant="contained">
@@ -62,7 +85,6 @@ const Home: NextPage = () => {
           </Grid>
         </Paper>
       </Container>
-      <CurrencyDialog />
     </BrandingProvider>
   );
 };

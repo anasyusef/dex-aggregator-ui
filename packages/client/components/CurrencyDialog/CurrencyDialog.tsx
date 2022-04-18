@@ -16,25 +16,29 @@ import {
 import { Box } from "@mui/system";
 import React, { useState } from "react";
 import { useGetTokensListQuery } from "state/tokenListsApi";
+import { TokenInfo } from "@uniswap/token-lists";
 import TokensList from "./components/TokensList";
 
 export interface Props {
   open: boolean;
-  selectedValue: string;
-  onClose: (value: string) => void;
+  selectedToken?: TokenInfo;
+  onClose: () => void;
+  onSelectToken: (value: TokenInfo) => void;
 }
 
-function SimpleDialog(props: Props) {
-  const { onClose, selectedValue, open } = props;
+export default function CurrencyDialog(props: Props) {
+  const { onClose, onSelectToken, selectedToken, open } = props;
   const { data, isLoading, isSuccess } = useGetTokensListQuery("");
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleClose = () => {
-    onClose(selectedValue);
+    onClose();
+    setSearchTerm("");
   };
 
-  const handleListItemClick = (value: string) => {
-    onClose(value);
+  const handleTokenItemClick = (value: TokenInfo) => {
+    onSelectToken(value);
+    setSearchTerm("");
   };
 
   return (
@@ -86,6 +90,8 @@ function SimpleDialog(props: Props) {
       </ListSubheader>
       <DialogContent dividers>
         <TokensList
+          selectedToken={selectedToken}
+          onTokenItemClick={handleTokenItemClick}
           searchTerm={searchTerm}
           isLoading={isLoading}
           data={data?.tokens}
@@ -93,28 +99,5 @@ function SimpleDialog(props: Props) {
         />
       </DialogContent>
     </Dialog>
-  );
-}
-
-export default function SimpleDialogDemo() {
-  const [open, setOpen] = React.useState(true);
-
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = (value: string) => {
-    setOpen(false);
-  };
-
-  return (
-    <div>
-      <Typography variant="subtitle1" component="div"></Typography>
-      <br />
-      <Button variant="outlined" onClick={handleClickOpen}>
-        Open simple dialog
-      </Button>
-      <SimpleDialog open={open} onClose={handleClose} />
-    </div>
   );
 }
