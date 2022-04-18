@@ -13,7 +13,7 @@ import {
   useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
-import { TopBar } from "../components";
+import { CurrencyDialog, TopBar } from "../components";
 
 const Home: NextPage = () => {
   const theme = useTheme();
@@ -62,6 +62,7 @@ const Home: NextPage = () => {
           </Grid>
         </Paper>
       </Container>
+      <CurrencyDialog />
     </BrandingProvider>
   );
 };

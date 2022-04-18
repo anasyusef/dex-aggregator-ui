@@ -51,7 +51,7 @@ export default function TopBar() {
             <NetworkSelector />
             <WalletButton />
           </Stack>
-          <Tooltip aria-label={tooltipLabel} title={tooltipLabel}>
+          {/* <Tooltip aria-label={tooltipLabel} title={tooltipLabel}> */}
             <IconButton
               disabled
               size="large"
@@ -64,7 +64,7 @@ export default function TopBar() {
                 <LightModeOutlined />
               )}
             </IconButton>
-          </Tooltip>
+          {/* </Tooltip> */}
         </Toolbar>
       </AppBar>
     </Box>

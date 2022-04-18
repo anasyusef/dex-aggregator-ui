@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { TokenInfo } from "@uniswap/token-lists";
 import type { RootState } from ".";
 
 // Define a type for the slice state

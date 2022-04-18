@@ -3,14 +3,20 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { save, load } from "redux-localstorage-simple";
 import web3Reducer from "./web3Slice";
 import userReducer from "./userSlice";
+import { tokensApi } from "./tokenListsApi";
 // ...
 
 const PERSISTED_KEYS: string[] = ["user"];
 
 export function makeStore() {
   return configureStore({
-    reducer: { web3: web3Reducer, user: userReducer },
-    // middleware: (getDefaultMiddleware) =>
+    reducer: {
+      web3: web3Reducer,
+      user: userReducer,
+      [tokensApi.reducerPath]: tokensApi.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(tokensApi.middleware),
     //   getDefaultMiddleware().concat(
     //     save({ states: PERSISTED_KEYS, debounce: 400 })
     //   ),
