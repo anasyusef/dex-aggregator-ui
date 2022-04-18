@@ -9,6 +9,7 @@ import List from "@mui/material/List";
 import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
 import { TokenInfo } from "@uniswap/token-lists";
+import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
 import { useWeb3 } from "contexts/Web3Provider";
 import useDebounce from "hooks/useDebounce";
@@ -44,9 +45,17 @@ function getTokens({
   if (!chainId || (!isNetworkSupported && isAccountActive)) {
     chainId = SupportedChainId.MAINNET;
   }
-  return tokens.filter((token) => {
+  const chainInfo = CHAIN_INFO[chainId];
+  const nativeCurrencyTokenInfo: TokenInfo = {
+    ...chainInfo.nativeCurrency,
+    address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    chainId,
+    logoURI: chainInfo.logoUrl,
+  };
+  const tokensWithNative = [nativeCurrencyTokenInfo, ...tokens];
+  return tokensWithNative.filter((token) => {
     const isChainIdMatch = token.chainId === chainId;
-    const isStartsWithMatch = token.symbol.toLowerCase().startsWith(searchTerm);
+    const isStartsWithMatch = token.symbol.toLowerCase().startsWith(searchTerm.toLowerCase());
     const isAddressMatch =
       token.address.toLowerCase() === searchTerm.toLowerCase();
     return isChainIdMatch && (isStartsWithMatch || isAddressMatch);
@@ -122,7 +131,6 @@ export default function TokensList({
       tokens: data,
     });
     console.log(tokens);
-    const SIZE = 30;
     return (
       <List>
         {tokens.map((value) => (
@@ -135,7 +143,6 @@ export default function TokensList({
             }
             onClick={() => handleTokenItemClick(value)}
             key={value.address}
-            address={value.address}
             logoURI={value.logoURI}
             symbol={value.symbol}
           />

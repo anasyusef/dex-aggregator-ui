@@ -1,15 +1,12 @@
-import ethereumLogoUrl from "assets/images/ethereum-logo.png";
-import arbitrumLogoUrl from "assets/svg/arbitrum_logo.svg";
-import optimismLogoUrl from "assets/svg/optimistic_ethereum.svg";
-import polygonMaticLogo from "assets/svg/polygon-matic-logo.svg";
-import { StaticImageData } from "next/image";
-
 import { SupportedChainId } from "./chains";
 
 export enum NetworkType {
   L1,
   L2,
 }
+
+const ETHEREUM_LOGO_URL = "/assets/images/ethereum-logo.png";
+const POLYGON_MATIC_LOGO_URL = "/assets/svg/polygon-matic-logo.svg";
 
 interface BaseChainInfo {
   readonly networkType: NetworkType;
@@ -18,7 +15,7 @@ interface BaseChainInfo {
   readonly bridge?: string;
   readonly explorer: string;
   //   readonly infoLink: string;
-  readonly logoUrl: StaticImageData;
+  readonly logoUrl: string;
   readonly label: string;
   readonly helpCenterUrl?: string;
   readonly nativeCurrency: {
@@ -39,7 +36,7 @@ export const CHAIN_INFO: ChainInfoMap = {
     explorer: "https://etherscan.io/",
     // infoLink: "https://info.uniswap.org/#/",
     label: "Ethereum",
-    logoUrl: ethereumLogoUrl,
+    logoUrl: ETHEREUM_LOGO_URL,
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   },
   [SupportedChainId.ROPSTEN]: {
@@ -48,7 +45,7 @@ export const CHAIN_INFO: ChainInfoMap = {
     explorer: "https://ropsten.etherscan.io/",
     // infoLink: "https://info.uniswap.org/#/",
     label: "Ropsten",
-    logoUrl: ethereumLogoUrl,
+    logoUrl: ETHEREUM_LOGO_URL,
     nativeCurrency: { name: "Ropsten Ether", symbol: "ropETH", decimals: 18 },
   },
   [SupportedChainId.POLYGON]: {
@@ -58,7 +55,7 @@ export const CHAIN_INFO: ChainInfoMap = {
     docs: "https://polygon.io/",
     explorer: "https://polygonscan.com/",
     label: "Polygon",
-    logoUrl: polygonMaticLogo,
+    logoUrl: POLYGON_MATIC_LOGO_URL,
     nativeCurrency: { name: "Polygon Matic", symbol: "MATIC", decimals: 18 },
   },
   [SupportedChainId.POLYGON_MUMBAI]: {
@@ -68,7 +65,7 @@ export const CHAIN_INFO: ChainInfoMap = {
     docs: "https://polygon.io/",
     explorer: "https://mumbai.polygonscan.com/",
     label: "Polygon Mumbai",
-    logoUrl: polygonMaticLogo,
+    logoUrl: POLYGON_MATIC_LOGO_URL,
     nativeCurrency: {
       name: "Polygon Mumbai Matic",
       symbol: "mMATIC",

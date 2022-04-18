@@ -2,9 +2,9 @@ import { useWeb3 } from "contexts/Web3Provider";
 import React from "react";
 import { getProviderName } from "utils/provider";
 import Image, { ImageProps } from "next/image";
-import coinbaseWalletIcon from "assets/images/coinbaseWalletIcon.svg";
+import coinbaseWalletIcon from "public/assets/images/coinbaseWalletIcon.svg";
 import metamaskIcon from "assets/images/metamask.png";
-import walletConnectIcon from "assets/images/walletConnectIcon.svg";
+import walletConnectIcon from "public/assets/images/walletConnectIcon.svg";
 import jazzicon from "@metamask/jazzicon";
 
 type Props = {
