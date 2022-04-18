@@ -64,7 +64,7 @@ function MenuItemInner({ onClick, targetChain }: MenuItemInnerProps) {
 }
 
 export default function ChainMenu() {
-  const { chainId, isNetworkSupported, provider } = useWeb3();
+  const { chainId, isNetworkSupported, provider, isAccountActive } = useWeb3();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -74,7 +74,7 @@ export default function ChainMenu() {
     setAnchorEl(null);
   };
 
-  if (!isNetworkSupported) {
+  if (!isNetworkSupported && isAccountActive) {
     return (
       <Button variant="outlined" disabled>
         Network not supported

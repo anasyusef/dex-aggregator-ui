@@ -1,21 +1,27 @@
+import BrandingProvider from "@/components/BrandingProvider";
+import SwapField from "@/components/SwapField/SwapField";
+import SettingsIcon from "@mui/icons-material/Settings";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
 import {
-  Box,
   Button,
   Container,
   Grid,
+  IconButton,
   Paper,
-  TextField,
+  Stack,
   Typography,
+  useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
 import { TopBar } from "../components";
-import Web3Provider, { useWeb3 } from "contexts/Web3Provider";
 
 const Home: NextPage = () => {
+  const theme = useTheme();
+  console.log({ theme: theme.palette.mode });
   return (
-    <Web3Provider>
+    <BrandingProvider>
       <TopBar />
-      <Container maxWidth="sm">
+      <Container sx={{ mt: 8 }} maxWidth="sm">
         <Paper
           variant="outlined"
           sx={{
@@ -24,15 +30,29 @@ const Home: NextPage = () => {
             px: 5,
           }}
         >
-          <Typography sx={{ mb: 3 }} gutterBottom variant="h6">
-            Swap
-          </Typography>
-          <Grid container spacing={2}>
+          <Stack
+            sx={{ mb: 2 }}
+            justifyContent={"space-between"}
+            direction={"row"}
+          >
+            <Typography display={"flex"} alignItems="center" variant="h6">
+              Swap
+            </Typography>
+            <IconButton>
+              <SettingsIcon />
+            </IconButton>
+          </Stack>
+          <Grid container spacing={1}>
             <Grid item xs={12}>
-              <TextField type={"number"} fullWidth />
+              <SwapField />
+            </Grid>
+            <Grid display={"flex"} justifyContent={"center"} item xs={12}>
+              <IconButton color="primary" size="large">
+                <SwapVertIcon />
+              </IconButton>
             </Grid>
             <Grid item xs={12}>
-              <TextField fullWidth />
+              <SwapField />
             </Grid>
             <Grid item xs={12}>
               <Button fullWidth variant="contained">
@@ -42,7 +62,7 @@ const Home: NextPage = () => {
           </Grid>
         </Paper>
       </Container>
-    </Web3Provider>
+    </BrandingProvider>
   );
 };
 

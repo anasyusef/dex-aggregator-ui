@@ -1,8 +1,9 @@
 import * as React from "react";
 import Document, { Html, Head, Main, NextScript } from "next/document";
 import createEmotionServer from "@emotion/server/create-instance";
-import theme from "theme";
+import { getMetaThemeColor } from "theme";
 import createEmotionCache from "createEmotionCache";
+import { GlobalStyles } from "@mui/material";
 
 export default class MyDocument extends Document {
   render() {
@@ -10,13 +11,50 @@ export default class MyDocument extends Document {
       <Html lang="en">
         <Head>
           {/* PWA primary color */}
-          <meta name="theme-color" content={theme.palette.primary.main} />
+          <meta
+            name="theme-color"
+            content={getMetaThemeColor("light")}
+            media="(prefers-color-scheme: light)"
+          />
+          <meta
+            name="theme-color"
+            content={getMetaThemeColor("dark")}
+            media="(prefers-color-scheme: dark)"
+          />
+          <link
+            href="https://fonts.gstatic.com"
+            rel="preconnect"
+            crossOrigin="anonymous"
+          />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="shortcut icon" href="/static/favicon.ico" />
           <link
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
           />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap"
+            rel="stylesheet"
+          />
           {/* Inject MUI styles first to match with the prepend: true configuration. */}
+          {/* <GlobalStyles
+            styles={{
+              // First SSR paint
+              ".only-light-mode": {
+                display: "block",
+              },
+              ".only-dark-mode": {
+                display: "none",
+              },
+              // Post SSR Hydration
+              ".mode-dark .only-light-mode": {
+                display: "none",
+              },
+              ".mode-dark .only-dark-mode": {
+                display: "block",
+              },
+            }}
+          /> */}
           {(this.props as any).emotionStyleTags}
         </Head>
         <body>
