@@ -11,9 +11,9 @@ type Props = {
 };
 
 export default function SwapField({
+  onTokenSelect,
   otherTokenSelected,
   selectedToken,
-  onTokenSelect,
 }: Props) {
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);

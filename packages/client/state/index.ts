@@ -3,6 +3,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { save, load } from "redux-localstorage-simple";
 import web3Reducer from "./web3Slice";
 import userReducer from "./userSlice";
+import swapReducer from "./swapSlice";
 import { tokensApi } from "./tokenListsApi";
 // ...
 
@@ -13,6 +14,7 @@ export function makeStore() {
     reducer: {
       web3: web3Reducer,
       user: userReducer,
+      swap: swapReducer,
       [tokensApi.reducerPath]: tokensApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
