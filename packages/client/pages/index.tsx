@@ -10,18 +10,37 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { CHAIN_INFO } from "constants/chainInfo";
+import { SupportedChainId } from "constants/chains";
+import { useWeb3 } from "contexts/Web3Provider";
 import type { NextPage } from "next";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "state";
 import {
   setInputToken,
   setOutputToken,
   swapTokenPositions,
+  useIsSwapDisabled,
 } from "state/swapSlice";
 import { SwapSettings, TopBar } from "../components";
 
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
   const { input, output } = useAppSelector((state) => state.swap);
+  const { chainId: chainIdWeb3 } = useWeb3();
+  const { isDisabled, message } = useIsSwapDisabled();
+  const chainId = chainIdWeb3 || SupportedChainId.MAINNET;
+  useEffect(() => {
+    const chainInfo = CHAIN_INFO[chainId];
+    dispatch(
+      setInputToken({
+        ...chainInfo.nativeCurrency,
+        logoURI: chainInfo.logoUrl,
+        chainId,
+        address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+      })
+    );
+  }, [chainId, dispatch]);
 
   return (
     <BrandingProvider>
@@ -70,8 +89,8 @@ const Home: NextPage = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <Button fullWidth variant="contained">
-                Swap
+              <Button disabled={isDisabled} fullWidth variant="contained">
+                {isDisabled ? message : "Swap"}
               </Button>
             </Grid>
           </Grid>

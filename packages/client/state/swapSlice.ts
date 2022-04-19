@@ -1,5 +1,6 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createSelector } from "@reduxjs/toolkit";
 import { TokenInfo } from "@uniswap/token-lists";
+import { useAppSelector } from "state";
 
 interface SwapState {
   input?: TokenInfo;
@@ -26,5 +27,11 @@ export const swapSlice = createSlice({
 
 export const { setInputToken, setOutputToken, swapTokenPositions } =
   swapSlice.actions;
+
+export function useIsSwapDisabled(): { isDisabled: boolean; message: string } {
+  const { input, output } = useAppSelector((state) => state.swap);
+
+  return { isDisabled: !input || !output, message: "Select a token" };
+}
 
 export default swapSlice.reducer;
