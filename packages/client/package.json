@@ -35,7 +35,7 @@
     "web3modal": "^1.9.6"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=14.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.16.4",
