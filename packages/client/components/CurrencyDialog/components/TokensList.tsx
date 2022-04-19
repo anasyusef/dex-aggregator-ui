@@ -55,7 +55,9 @@ function getTokens({
   const tokensWithNative = [nativeCurrencyTokenInfo, ...tokens];
   return tokensWithNative.filter((token) => {
     const isChainIdMatch = token.chainId === chainId;
-    const isStartsWithMatch = token.symbol.toLowerCase().startsWith(searchTerm.toLowerCase());
+    const isStartsWithMatch = token.symbol
+      .toLowerCase()
+      .startsWith(searchTerm.toLowerCase());
     const isAddressMatch =
       token.address.toLowerCase() === searchTerm.toLowerCase();
     return isChainIdMatch && (isStartsWithMatch || isAddressMatch);
@@ -130,9 +132,9 @@ export default function TokensList({
       searchTerm: debouncedSearchTerm,
       tokens: data,
     });
-    console.log(tokens);
     return (
       <List>
+        {tokens.length === 0 && "No results found"}
         {tokens.map((value) => (
           <TokenListItem
             disabled={
