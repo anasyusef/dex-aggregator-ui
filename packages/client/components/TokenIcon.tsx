@@ -19,7 +19,6 @@ export default function TokenIcon({
   symbol,
 }: Props) {
   const [error, setError] = useState(false);
-  console.log(parseIPFSURI(logoURI ?? ""));
   return (
     <Avatar sx={{ height: size, width: size }}>
       {error || !logoURI ? (

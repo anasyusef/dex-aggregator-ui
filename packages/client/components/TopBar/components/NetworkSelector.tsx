@@ -5,7 +5,7 @@ import Image from "next/image";
 import ethereumLogo from "assets/images/ethereum-logo.png";
 import polygonLogo from "assets/svg/polygon-matic-logo.svg";
 import { CHAIN_INFO } from "constants/chainInfo";
-import { useWeb3 } from "contexts/Web3Provider";
+import { useActiveWeb3, useWeb3 } from "contexts/Web3Provider";
 import { ALL_SUPPORTED_CHAIN_IDS, SupportedChainId } from "constants/chains";
 import { switchToNetwork } from "utils/switchToNetwork";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -64,7 +64,12 @@ function MenuItemInner({ onClick, targetChain }: MenuItemInnerProps) {
 }
 
 export default function ChainMenu() {
-  const { chainId, isNetworkSupported, provider, isAccountActive } = useWeb3();
+  const {
+    chainId,
+    isNetworkSupported,
+    library: provider,
+    isAccountActive,
+  } = useActiveWeb3();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -91,7 +96,7 @@ export default function ChainMenu() {
     }
   };
 
-  const { label, logoUrl } = CHAIN_INFO[chainId || SupportedChainId.MAINNET];
+  const { label, logoUrl } = CHAIN_INFO[chainId];
   return (
     <>
       <Button

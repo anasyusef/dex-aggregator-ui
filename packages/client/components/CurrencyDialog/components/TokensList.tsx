@@ -1,3 +1,4 @@
+import { Interface } from "@ethersproject/abi";
 import FolderIcon from "@mui/icons-material/Folder";
 import {
   ListItemButton,
@@ -9,12 +10,16 @@ import List from "@mui/material/List";
 import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
 import { TokenInfo } from "@uniswap/token-lists";
+import { Erc20Interface } from "abis/types/Erc20";
 import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
 import { useWeb3 } from "contexts/Web3Provider";
+import { useMultipleContractSingleData } from "hooks/multicall";
 import useDebounce from "hooks/useDebounce";
 import * as React from "react";
 import TokenListItem from "./TokenListItem";
+import ERC20ABI from "abis/erc20.json";
+import { useMemo } from "react";
 
 function generate(items: number, element: React.ReactElement) {
   return Array(items)
@@ -42,7 +47,11 @@ function getTokens({
   searchTerm,
   tokens,
 }: IGetTokens) {
-  if (!chainId || (!isNetworkSupported && isAccountActive) || !isAccountActive) {
+  if (
+    !chainId ||
+    (!isNetworkSupported && isAccountActive) ||
+    !isAccountActive
+  ) {
     chainId = SupportedChainId.MAINNET;
   }
   const chainInfo = CHAIN_INFO[chainId];
@@ -80,6 +89,9 @@ type Props = {
     }
 );
 
+const ERC20Interface = new Interface(ERC20ABI) as Erc20Interface;
+const tokenBalancesGasRequirement = { gasRequired: 185_000 };
+
 export default function TokensList({
   isLoading,
   isSuccess,
@@ -88,12 +100,32 @@ export default function TokensList({
   selectedToken,
   onTokenItemClick,
 }: Props) {
-  let { chainId, isAccountActive, isNetworkSupported } = useWeb3();
+  let { chainId, isAccountActive, isNetworkSupported, account } = useWeb3();
   const debouncedSearchTerm = useDebounce(searchTerm, 100);
 
   const handleTokenItemClick = (value: TokenInfo) => {
     onTokenItemClick(value);
   };
+
+  
+  const t =getTokens({
+    chainId,
+    isAccountActive,
+    isNetworkSupported,
+    tokens: data,
+    searchTerm: searchTerm,
+  }).map((value) => value.address);
+  
+  const result = useMultipleContractSingleData(
+    t,
+    ERC20Interface,
+    "balanceOf",
+    useMemo(() => [account], [account]),
+    tokenBalancesGasRequirement
+  );
+
+
+  console.log(result);
 
   if (isLoading) {
     return (

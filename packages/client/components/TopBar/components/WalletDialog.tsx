@@ -1,30 +1,24 @@
-import {
-  Avatar,
-  Button,
-  Dialog,
-  DialogTitle,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Typography,
-  Card,
-  CardContent,
-  CardActions,
-  DialogContent,
-  Stack,
-} from "@mui/material";
-import { blue } from "@mui/material/colors";
-import { useWeb3 } from "contexts/Web3Provider";
-import React, { useState } from "react";
-import { shortenAddress } from "utils";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import LogoutIcon from "@mui/icons-material/Logout";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import {
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { ProviderIcon } from "components";
+import { useActiveWeb3 } from "contexts/Web3Provider";
+import { useState } from "react";
 import { CopyToClipboard } from "react-copy-to-clipboard";
+import { shortenAddress } from "utils";
 import { ExplorerDataType, getExplorerLink } from "utils/getExplorerLink";
 import { getFormattedProviderName } from "utils/provider";
-import { ProviderIcon } from "components";
 
 export interface SimpleDialogProps {
   open: boolean;
@@ -53,7 +47,7 @@ interface AccountCardProps {
 }
 
 function AccountCard({ onClose }: AccountCardProps) {
-  const { account, chainId, disconnect, provider } = useWeb3();
+  const { account, chainId, disconnect, library: provider } = useActiveWeb3();
   const [copyText, setCopyText] = useState("Copy Address");
   const handleDisconnect = () => {
     disconnect();
@@ -106,34 +100,3 @@ function AccountCard({ onClose }: AccountCardProps) {
     </Card>
   );
 }
-
-// export default function WalletDialog() {
-//   const [open, setOpen] = React.useState(false);
-//   const [selectedValue, setSelectedValue] = React.useState(emails[1]);
-
-//   const handleClickOpen = () => {
-//     setOpen(true);
-//   };
-
-//   const handleClose = (value: string) => {
-//     setOpen(false);
-//     setSelectedValue(value);
-//   };
-
-//   return (
-//     <div>
-//       <Typography variant="subtitle1" component="div">
-//         Selected: {selectedValue}
-//       </Typography>
-//       <br />
-//       <Button variant="outlined" onClick={handleClickOpen}>
-//         Open simple dialog
-//       </Button>
-//       <WalletDialog
-//         selectedValue={selectedValue}
-//         open={open}
-//         onClose={handleClose}
-//       />
-//     </div>
-//   );
-// }

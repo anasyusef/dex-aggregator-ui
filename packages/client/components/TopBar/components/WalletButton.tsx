@@ -3,7 +3,11 @@ import { Button, Divider, Stack, Typography } from "@mui/material";
 import { ProviderIcon } from "components";
 import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
-import { useNativeCurrencyBalance, useWeb3 } from "contexts/Web3Provider";
+import {
+  useActiveWeb3,
+  useNativeCurrencyBalance,
+  useWeb3,
+} from "contexts/Web3Provider";
 import { useState } from "react";
 import { shortenAddress } from "utils";
 import WalletDialog from "./WalletDialog";
@@ -12,7 +16,7 @@ type Props = {};
 
 export default function Wallet({}: Props) {
   const { connect, isAccountActive, account, chainId, isNetworkSupported } =
-    useWeb3();
+    useActiveWeb3();
   const { formattedBalance } = useNativeCurrencyBalance();
   const [open, setOpen] = useState(false);
 
@@ -20,14 +24,14 @@ export default function Wallet({}: Props) {
     await connect();
   };
 
-  if (!isNetworkSupported && isAccountActive) {
+  if (!isNetworkSupported) {
     return (
       <Button variant="outlined" startIcon={<ErrorIcon />} color="error">
         Wrong Network
       </Button>
     );
   }
-  
+
   if (!isAccountActive) {
     return (
       <Button variant="outlined" onClick={handleConnect} color="inherit">
@@ -36,7 +40,7 @@ export default function Wallet({}: Props) {
     );
   }
 
-  const { nativeCurrency } = CHAIN_INFO[chainId || SupportedChainId.MAINNET];
+  const { nativeCurrency } = CHAIN_INFO[chainId];
 
   return (
     <>

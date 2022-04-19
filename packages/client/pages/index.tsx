@@ -13,6 +13,8 @@ import {
 import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
 import { useWeb3 } from "contexts/Web3Provider";
+import useBlockNumber from "hooks/useBlockNumber";
+import useIsSwapDisabled from "hooks/useIsSwapDisabled";
 import type { NextPage } from "next";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "state";
@@ -22,15 +24,16 @@ import {
   setOutputAmount,
   setOutputToken,
   swapTokenPositions,
-  useIsSwapDisabled,
 } from "state/swapSlice";
-import { SwapSettings, TopBar } from "../components";
+import { BlockInfo, SwapSettings, TopBar } from "../components";
 
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
   const { input, output, inputAmount, outputAmount } = useAppSelector(
     (state) => state.swap
   );
+
+  const blockNumber = useBlockNumber();
   const {
     chainId: chainIdWeb3,
     isNetworkSupported,
@@ -123,6 +126,7 @@ const Home: NextPage = () => {
           </Grid>
         </Paper>
       </Container>
+      <BlockInfo />
     </BrandingProvider>
   );
 };

@@ -1,8 +1,10 @@
-import { IWeb3Provider, Web3Context } from "./Web3Provider";
-import { Token, TokenAmount } from "@uniswap/sdk";
+import { SupportedChainId } from "constants/chains";
+import { BigNumberish, ethers } from "ethers";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { BigNumber, BigNumberish, ethers } from "ethers";
-import { CHAIN_INFO } from "constants/chainInfo";
+import { IWeb3Provider, Web3Context } from "./Web3Provider";
+
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+interface IActiveWeb3 extends WithRequired<IWeb3Provider, "chainId"> {}
 
 export function useWeb3(): IWeb3Provider {
   const web3Provider = useContext(Web3Context);
@@ -12,6 +14,25 @@ export function useWeb3(): IWeb3Provider {
     );
   }
   return web3Provider;
+}
+
+export function useActiveWeb3(): IActiveWeb3 {
+  const web3 = useWeb3();
+
+  if (web3.isAccountActive) {
+    return web3 as IActiveWeb3;
+  }
+
+  let { chainId, isNetworkSupported } = web3;
+  if (!chainId || !isNetworkSupported) {
+    chainId = SupportedChainId.MAINNET;
+  }
+
+  return {
+    ...web3,
+    isNetworkSupported: true,
+    chainId,
+  };
 }
 
 export function useNativeCurrencyBalance() {
