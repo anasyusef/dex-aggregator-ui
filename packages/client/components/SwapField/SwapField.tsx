@@ -8,20 +8,23 @@ type Props = {
   otherTokenSelected?: TokenInfo;
   selectedToken?: TokenInfo;
   onTokenSelect: (token: TokenInfo) => void;
+  onAmountChange: (val: string) => void;
+  amount?: string;
 };
 
 export default function SwapField({
   onTokenSelect,
   otherTokenSelected,
   selectedToken,
+  onAmountChange,
+  amount,
 }: Props) {
-  const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [open, setOpen] = useState(false);
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    if (!Number.isNaN(+value)) {
-      setText(e.target.value);
+    if (!Number.isNaN(+value) && value.length <= 18) {
+      onAmountChange(e.target.value);
     }
   };
 
@@ -70,7 +73,7 @@ export default function SwapField({
             placeholder="0.0"
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            value={text}
+            value={amount}
             fullWidth
             sx={{
               ml: 2,

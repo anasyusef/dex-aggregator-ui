@@ -17,7 +17,9 @@ import type { NextPage } from "next";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "state";
 import {
+  setInputAmount,
   setInputToken,
+  setOutputAmount,
   setOutputToken,
   swapTokenPositions,
   useIsSwapDisabled,
@@ -26,7 +28,9 @@ import { SwapSettings, TopBar } from "../components";
 
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
-  const { input, output } = useAppSelector((state) => state.swap);
+  const { input, output, inputAmount, outputAmount } = useAppSelector(
+    (state) => state.swap
+  );
   const {
     chainId: chainIdWeb3,
     isNetworkSupported,
@@ -82,6 +86,8 @@ const Home: NextPage = () => {
             <Grid item xs={12}>
               <SwapField
                 selectedToken={input}
+                amount={inputAmount}
+                onAmountChange={(val) => dispatch(setInputAmount(val))}
                 otherTokenSelected={output}
                 onTokenSelect={(val) => dispatch(setInputToken(val))}
               />
@@ -99,6 +105,8 @@ const Home: NextPage = () => {
               <SwapField
                 selectedToken={output}
                 otherTokenSelected={input}
+                amount={outputAmount}
+                onAmountChange={(val) => dispatch(setOutputAmount(val))}
                 onTokenSelect={(val) => dispatch(setOutputToken(val))}
               />
             </Grid>

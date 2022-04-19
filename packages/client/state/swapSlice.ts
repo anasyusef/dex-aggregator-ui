@@ -5,7 +5,9 @@ import { useAppSelector } from "state";
 
 interface SwapState {
   input?: TokenInfo;
+  inputAmount?: string;
   output?: TokenInfo;
+  outputAmount?: string;
 }
 
 const initialState: SwapState = {};
@@ -23,15 +25,28 @@ export const swapSlice = createSlice({
     swapTokenPositions: (state) => {
       [state.input, state.output] = [state.output, state.input];
     },
+    setInputAmount: (state, action: { payload: string }) => {
+      state.inputAmount = action.payload;
+    },
+    setOutputAmount: (state, action: { payload: string }) => {
+      state.outputAmount = action.payload;
+    },
   },
 });
 
-export const { setInputToken, setOutputToken, swapTokenPositions } =
-  swapSlice.actions;
+export const {
+  setInputToken,
+  setOutputToken,
+  swapTokenPositions,
+  setInputAmount,
+  setOutputAmount,
+} = swapSlice.actions;
 
 export function useIsSwapDisabled(): { isDisabled: boolean; message: string } {
   const { isAccountActive, isNetworkSupported } = useWeb3();
-  const { input, output } = useAppSelector((state) => state.swap);
+  const { input, output, inputAmount, outputAmount } = useAppSelector(
+    (state) => state.swap
+  );
 
   if (!isAccountActive)
     return { isDisabled: false, message: "Connect to Wallet" };
@@ -40,6 +55,10 @@ export function useIsSwapDisabled(): { isDisabled: boolean; message: string } {
 
   if (!input || !output) {
     return { isDisabled: true, message: "Select a token" };
+  }
+
+  if (!inputAmount || !outputAmount) {
+    return { isDisabled: true, message: "Enter an amount" };
   }
   return { isDisabled: false, message: "Swap" };
 }
