@@ -27,9 +27,7 @@ export default function Wallet({}: Props) {
       </Button>
     );
   }
-
-  const { nativeCurrency } = CHAIN_INFO[chainId || SupportedChainId.MAINNET];
-
+  
   if (!isAccountActive) {
     return (
       <Button variant="outlined" onClick={handleConnect} color="inherit">
@@ -37,6 +35,9 @@ export default function Wallet({}: Props) {
       </Button>
     );
   }
+
+  const { nativeCurrency } = CHAIN_INFO[chainId || SupportedChainId.MAINNET];
+
   return (
     <>
       <Button

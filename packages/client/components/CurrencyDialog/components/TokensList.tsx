@@ -42,7 +42,7 @@ function getTokens({
   searchTerm,
   tokens,
 }: IGetTokens) {
-  if (!chainId || (!isNetworkSupported && isAccountActive)) {
+  if (!chainId || (!isNetworkSupported && isAccountActive) || !isAccountActive) {
     chainId = SupportedChainId.MAINNET;
   }
   const chainInfo = CHAIN_INFO[chainId];

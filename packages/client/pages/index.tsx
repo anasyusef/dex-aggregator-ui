@@ -27,9 +27,17 @@ import { SwapSettings, TopBar } from "../components";
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
   const { input, output } = useAppSelector((state) => state.swap);
-  const { chainId: chainIdWeb3 } = useWeb3();
-  const { isDisabled, message } = useIsSwapDisabled();
-  const chainId = chainIdWeb3 || SupportedChainId.MAINNET;
+  const {
+    chainId: chainIdWeb3,
+    isNetworkSupported,
+    isAccountActive,
+    connect,
+  } = useWeb3();
+  const { isDisabled, message: swapMessage } = useIsSwapDisabled();
+  let chainId = chainIdWeb3 || SupportedChainId.MAINNET;
+  if (!isNetworkSupported) {
+    chainId = SupportedChainId.MAINNET;
+  }
   useEffect(() => {
     const chainInfo = CHAIN_INFO[chainId];
     dispatch(
@@ -41,6 +49,12 @@ const Home: NextPage = () => {
       })
     );
   }, [chainId, dispatch]);
+
+  const handleSwapClick = async () => {
+    if (!isAccountActive) {
+      await connect();
+    }
+  };
 
   return (
     <BrandingProvider>
@@ -89,8 +103,13 @@ const Home: NextPage = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <Button disabled={isDisabled} fullWidth variant="contained">
-                {isDisabled ? message : "Swap"}
+              <Button
+                disabled={isDisabled}
+                onClick={handleSwapClick}
+                fullWidth
+                variant="contained"
+              >
+                {swapMessage}
               </Button>
             </Grid>
           </Grid>

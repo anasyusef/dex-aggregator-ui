@@ -74,7 +74,7 @@ export default function ChainMenu() {
     setAnchorEl(null);
   };
 
-  if (!isNetworkSupported && isAccountActive) {
+  if (!isNetworkSupported) {
     return (
       <Button variant="outlined" disabled>
         Network not supported

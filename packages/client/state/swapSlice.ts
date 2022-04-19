@@ -1,5 +1,6 @@
 import { createSlice, createSelector } from "@reduxjs/toolkit";
 import { TokenInfo } from "@uniswap/token-lists";
+import { useWeb3 } from "contexts/Web3Provider";
 import { useAppSelector } from "state";
 
 interface SwapState {
@@ -29,9 +30,18 @@ export const { setInputToken, setOutputToken, swapTokenPositions } =
   swapSlice.actions;
 
 export function useIsSwapDisabled(): { isDisabled: boolean; message: string } {
+  const { isAccountActive, isNetworkSupported } = useWeb3();
   const { input, output } = useAppSelector((state) => state.swap);
 
-  return { isDisabled: !input || !output, message: "Select a token" };
+  if (!isAccountActive)
+    return { isDisabled: false, message: "Connect to Wallet" };
+  if (isAccountActive && !isNetworkSupported)
+    return { isDisabled: true, message: "Network not supported" };
+
+  if (!input || !output) {
+    return { isDisabled: true, message: "Select a token" };
+  }
+  return { isDisabled: false, message: "Swap" };
 }
 
 export default swapSlice.reducer;
