@@ -53,7 +53,7 @@ export async function switchToNetwork({
     });
   } catch (error) {
     // 4902 is the error code for attempting to switch to an unrecognized chainId
-    if (error.code === 4902) {
+    if ((error as any).code === 4902) {
       const info = CHAIN_INFO[chainId];
 
       await provider.request({
