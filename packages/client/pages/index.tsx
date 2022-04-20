@@ -16,17 +16,20 @@ import { useWeb3 } from "contexts/Web3Provider";
 import useBlockNumber from "hooks/useBlockNumber";
 import useENSAddress from "hooks/useENSAddress";
 import useIsSwapDisabled from "hooks/useIsSwapDisabled";
+import { useUSDCValue } from "hooks/useUSDCPrice";
 import useWrapCallback, { WrapType } from "hooks/useWrapCallback";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import { useCallback, useMemo } from "react";
 import { useAppDispatch } from "state";
+import { TradeState } from "state/routing/types";
 import { Field } from "state/swap/actions";
 import {
   useDerivedSwapInfo,
   useSwapActionHandlers,
   useSwapState,
 } from "state/swap/hooks";
+import { computeFiatValuePriceImpact } from "utils/computeFiatValuePriceImpact";
 import { maxAmountSpend } from "utils/maxAmountSpend";
 import { BlockInfo, SwapSettings, TopBar } from "../components";
 
@@ -97,6 +100,25 @@ const Home: NextPage = () => {
     [onUserInput]
   );
 
+  const [routeNotFound, routeIsLoading, routeIsSyncing] = useMemo(
+    () => [
+      !trade?.swaps,
+      TradeState.LOADING === tradeState,
+      TradeState.SYNCING === tradeState,
+    ],
+    [trade, tradeState]
+  );
+
+  const fiatValueInput = useUSDCValue(trade?.inputAmount);
+  const fiatValueOutput = useUSDCValue(trade?.outputAmount);
+
+  const priceImpact = useMemo(
+    () =>
+      routeIsSyncing
+        ? undefined
+        : computeFiatValuePriceImpact(fiatValueInput, fiatValueOutput),
+    [fiatValueInput, fiatValueOutput, routeIsSyncing]
+  );
   const formattedAmounts = useMemo(
     () => ({
       [independentField]: typedValue,
@@ -185,6 +207,8 @@ const Home: NextPage = () => {
                 onCurrencySelect={handleInputSelect}
                 onMax={handleMaxInput}
                 showMaxButton={showMaxButton}
+                fiatValue={fiatValueInput}
+                loading={independentField === Field.OUTPUT && routeIsSyncing}
               />
             </Grid>
             <Grid display={"flex"} justifyContent={"center"} item xs={12}>
@@ -203,7 +227,10 @@ const Home: NextPage = () => {
                 otherCurrency={currencies[Field.INPUT]}
                 value={formattedAmounts[Field.OUTPUT]}
                 onUserInput={handleTypeOutput}
+                priceImpact={priceImpact}
                 onCurrencySelect={handleOutputSelect}
+                fiatValue={fiatValueOutput}
+                loading={independentField === Field.INPUT && routeIsSyncing}
               />
             </Grid>
             <Grid item xs={12}>
