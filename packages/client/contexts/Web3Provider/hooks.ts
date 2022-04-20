@@ -34,21 +34,3 @@ export function useActiveWeb3(): IActiveWeb3 {
     chainId,
   };
 }
-
-export function useNativeCurrencyBalance() {
-  const { signer, chainId } = useWeb3();
-  const [balance, setBalance] = useState<BigNumberish | undefined>(undefined);
-
-  //   console.log(new NativeCurrency())
-
-  const fetchBalance = useCallback(async () => {
-    if (signer) {
-      setBalance(await signer.getBalance());
-    }
-  }, [signer]);
-
-  useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
-  return { balance, formattedBalance: ethers.utils.formatEther(balance || 0) };
-}

@@ -5,9 +5,9 @@ import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
 import {
   useActiveWeb3,
-  useNativeCurrencyBalance,
   useWeb3,
 } from "contexts/Web3Provider";
+import useNativeCurrencyBalance from "hooks/useNativeCurrencyBalance";
 import { useState } from "react";
 import { shortenAddress } from "utils";
 import WalletDialog from "./WalletDialog";
@@ -17,7 +17,7 @@ type Props = {};
 export default function Wallet({}: Props) {
   const { connect, isAccountActive, account, chainId, isNetworkSupported } =
     useActiveWeb3();
-  const { formattedBalance } = useNativeCurrencyBalance();
+  const { loading, formattedBalance } = useNativeCurrencyBalance();
   const [open, setOpen] = useState(false);
 
   const handleConnect = async () => {

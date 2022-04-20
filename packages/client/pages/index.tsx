@@ -13,11 +13,20 @@ import {
 import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
 import { useWeb3 } from "contexts/Web3Provider";
+import { useCurrency } from "hooks/Tokens";
 import useBlockNumber from "hooks/useBlockNumber";
 import useIsSwapDisabled from "hooks/useIsSwapDisabled";
 import type { NextPage } from "next";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "state";
+import { Field } from "state/swap/actions";
+import {
+  useDerivedSwapInfo,
+  useSwapActionHandlers,
+  useSwapState,
+} from "state/swap/hooks";
+import useWrapCallback, { WrapType } from "hooks/useWrapCallback";
 import {
   setInputAmount,
   setInputToken,
@@ -26,11 +35,83 @@ import {
   swapTokenPositions,
 } from "state/swapSlice";
 import { BlockInfo, SwapSettings, TopBar } from "../components";
+import useENSAddress from "hooks/useENSAddress";
 
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
-  const { input, output, inputAmount, outputAmount } = useAppSelector(
-    (state) => state.swap
+  const { query } = useRouter();
+  const { independentField, typedValue, recipient } = useSwapState();
+  const {
+    trade: { state: tradeState, trade },
+    allowedSlippage,
+    currencyBalances,
+    parsedAmount,
+    currencies,
+    inputError: swapInputError,
+  } = useDerivedSwapInfo();
+
+  const {
+    wrapType,
+    execute: onWrap,
+    inputError: wrapInputError,
+  } = useWrapCallback(
+    currencies[Field.INPUT],
+    currencies[Field.OUTPUT],
+    typedValue
+  );
+  const showWrap: boolean = wrapType !== WrapType.NOT_APPLICABLE;
+  const { address: recipientAddress } = useENSAddress(recipient);
+
+  const parsedAmounts = useMemo(
+    () =>
+      showWrap
+        ? {
+            [Field.INPUT]: parsedAmount,
+            [Field.OUTPUT]: parsedAmount,
+          }
+        : {
+            [Field.INPUT]:
+              independentField === Field.INPUT
+                ? parsedAmount
+                : trade?.inputAmount,
+            [Field.OUTPUT]:
+              independentField === Field.OUTPUT
+                ? parsedAmount
+                : trade?.outputAmount,
+          },
+    [independentField, parsedAmount, showWrap, trade]
+  );
+
+  const {
+    onSwitchTokens,
+    onCurrencySelection,
+    onUserInput,
+    onChangeRecipient,
+  } = useSwapActionHandlers();
+  const isValid = !swapInputError;
+  const dependentField: Field =
+    independentField === Field.INPUT ? Field.OUTPUT : Field.INPUT;
+  const handleTypeInput = useCallback(
+    (value: string) => {
+      onUserInput(Field.INPUT, value);
+    },
+    [onUserInput]
+  );
+  const handleTypeOutput = useCallback(
+    (value: string) => {
+      onUserInput(Field.OUTPUT, value);
+    },
+    [onUserInput]
+  );
+
+  const formattedAmounts = useMemo(
+    () => ({
+      [independentField]: typedValue,
+      [dependentField]: showWrap
+        ? parsedAmounts[independentField]?.toExact() ?? ""
+        : parsedAmounts[dependentField]?.toSignificant(6) ?? "",
+    }),
+    [dependentField, independentField, parsedAmounts, showWrap, typedValue]
   );
 
   const blockNumber = useBlockNumber();
@@ -88,11 +169,11 @@ const Home: NextPage = () => {
           <Grid container spacing={1}>
             <Grid item xs={12}>
               <SwapField
-                selectedToken={input}
-                amount={inputAmount}
-                onAmountChange={(val) => dispatch(setInputAmount(val))}
-                otherTokenSelected={output}
-                onTokenSelect={(val) => dispatch(setInputToken(val))}
+                currency={currencies[Field.INPUT]}
+                value={formattedAmounts[Field.INPUT]}
+                otherCurrency={currencies[Field.OUTPUT]}
+                onUserInput={handleTypeInput}
+                // onCurrencySelect={(val) => dispatch(setInputToken(val))}
               />
             </Grid>
             <Grid display={"flex"} justifyContent={"center"} item xs={12}>
@@ -106,11 +187,11 @@ const Home: NextPage = () => {
             </Grid>
             <Grid item xs={12}>
               <SwapField
-                selectedToken={output}
-                otherTokenSelected={input}
-                amount={outputAmount}
-                onAmountChange={(val) => dispatch(setOutputAmount(val))}
-                onTokenSelect={(val) => dispatch(setOutputToken(val))}
+                currency={currencies[Field.OUTPUT]}
+                otherCurrency={currencies[Field.INPUT]}
+                value={formattedAmounts[Field.OUTPUT]}
+                onUserInput={handleTypeOutput}
+                // onCurrencySelect={(val) => dispatch(setOutputToken(val))}
               />
             </Grid>
             <Grid item xs={12}>

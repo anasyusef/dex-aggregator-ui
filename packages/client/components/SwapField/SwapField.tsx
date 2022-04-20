@@ -3,34 +3,36 @@ import { Button, Grid, InputBase, Paper } from "@mui/material";
 import { TokenInfo } from "@uniswap/token-lists";
 import { CurrencyDialog, TokenIcon } from "components";
 import { ChangeEvent, useState } from "react";
+import { Currency } from "@uniswap/sdk-core";
 
 type Props = {
-  otherTokenSelected?: TokenInfo;
-  selectedToken?: TokenInfo;
-  onTokenSelect: (token: TokenInfo) => void;
-  onAmountChange: (val: string) => void;
-  amount?: string;
+  otherCurrency?: Currency | null;
+  currency?: Currency | null;
+  onCurrencySelect: (currency: Currency) => void;
+  onUserInput: (val: string) => void;
+  value: string;
 };
 
 export default function SwapField({
-  onTokenSelect,
-  otherTokenSelected,
-  selectedToken,
-  onAmountChange,
-  amount,
+  onCurrencySelect,
+  otherCurrency,
+  currency,
+  onUserInput,
+  value: amount,
 }: Props) {
   const [isFocused, setIsFocused] = useState(false);
+  // const;
   const [open, setOpen] = useState(false);
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    if (!Number.isNaN(+value) && value.length <= 18) {
-      onAmountChange(e.target.value);
+    if (!Number.isNaN(+value)) {
+      onUserInput(e.target.value);
     }
   };
 
-  const handleSelectToken = (value: TokenInfo) => {
+  const handleSelectToken = (value: Currency) => {
     setOpen(false);
-    onTokenSelect(value);
+    onCurrencySelect(value);
   };
 
   return (
@@ -69,6 +71,16 @@ export default function SwapField({
       >
         <Grid item xs={6}>
           <InputBase
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            type="text"
+            inputProps={{
+              inputMode: "decimal",
+              pattern: "^[0-9]*[.,]?[0-9]*$",
+              minLength: 1,
+              maxLength: 79,
+            }}
             onChange={handleChange}
             placeholder="0.0"
             onFocus={() => setIsFocused(true)}
@@ -93,25 +105,25 @@ export default function SwapField({
             endIcon={<KeyboardArrowDownIcon />}
             onClick={() => setOpen(true)}
             startIcon={
-              selectedToken && (
+              currency && (
                 <TokenIcon
-                  key={selectedToken.address}
+                  key={currency.symbol}
                   size={30}
-                  symbol={selectedToken.symbol}
-                  logoURI={selectedToken.logoURI}
+                  symbol={currency.symbol}
+                  // logoURI={currency.logoURI}
                 />
               )
             }
             // fullWidth
             variant="contained"
           >
-            {selectedToken ? selectedToken.symbol : "Select a token"}
+            {currency ? currency.symbol : "Select a token"}
           </Button>
         </Grid>
       </Grid>
       <CurrencyDialog
-        selectedToken={otherTokenSelected}
-        onSelectToken={handleSelectToken}
+        selectedCurrency={otherCurrency}
+        onCurrencySelect={handleSelectToken}
         open={open}
         onClose={() => setOpen(false)}
       />

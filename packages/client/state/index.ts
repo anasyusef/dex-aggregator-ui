@@ -1,12 +1,11 @@
-import { configureStore, applyMiddleware } from "@reduxjs/toolkit";
+import { configureStore } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
-import { save, load } from "redux-localstorage-simple";
-import { createMulticall } from "@uniswap/redux-multicall";
-import web3Reducer from "./web3Slice";
-import userReducer from "./userSlice";
-import swapReducer from "./swapSlice";
-import { tokensApi } from "./tokenListsApi";
+import { tokensApi } from "./lists/tokenListsApi";
 import multicall from "./multicall";
+import swap from "./swap/reducer";
+import transactions from './transactions/reducer'
+import userReducer from "./userSlice";
+import web3Reducer from "./web3Slice";
 // ...
 
 const PERSISTED_KEYS: string[] = ["user"];
@@ -16,7 +15,8 @@ export function makeStore() {
     reducer: {
       web3: web3Reducer,
       user: userReducer,
-      swap: swapReducer,
+      swap,
+      transactions,
       multicall: multicall.reducer,
       [tokensApi.reducerPath]: tokensApi.reducer,
     },

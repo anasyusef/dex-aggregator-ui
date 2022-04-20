@@ -13,13 +13,21 @@ import { TokenInfo } from "@uniswap/token-lists";
 import { Erc20Interface } from "abis/types/Erc20";
 import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
-import { useWeb3 } from "contexts/Web3Provider";
+import { useActiveWeb3, useWeb3 } from "contexts/Web3Provider";
 import { useMultipleContractSingleData } from "hooks/multicall";
 import useDebounce from "hooks/useDebounce";
 import * as React from "react";
 import TokenListItem from "./TokenListItem";
 import ERC20ABI from "abis/erc20.json";
 import { useMemo } from "react";
+import { CallState, CallStateResult } from "@uniswap/redux-multicall";
+import useNativeCurrencyBalance from "hooks/useNativeCurrencyBalance";
+import { useAllTokens } from "hooks/Tokens";
+import useNativeCurrency from "hooks/useNativeCurrency";
+import { useAllTokenBalances } from "state/wallet/hooks";
+import { getTokenFilter } from "hooks/useTokenList/filtering";
+import { Token, Currency } from "@uniswap/sdk-core";
+import { tokenComparator, useSortTokensByQuery } from "hooks/useTokenList/sorting";
 
 function generate(items: number, element: React.ReactElement) {
   return Array(items)
@@ -54,14 +62,7 @@ function getTokens({
   ) {
     chainId = SupportedChainId.MAINNET;
   }
-  const chainInfo = CHAIN_INFO[chainId];
-  const nativeCurrencyTokenInfo: TokenInfo = {
-    ...chainInfo.nativeCurrency,
-    address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-    chainId,
-    logoURI: chainInfo.logoUrl,
-  };
-  const tokensWithNative = [nativeCurrencyTokenInfo, ...tokens];
+  const tokensWithNative = [...tokens];
   return tokensWithNative.filter((token) => {
     const isChainIdMatch = token.chainId === chainId;
     const isStartsWithMatch = token.symbol
@@ -74,58 +75,107 @@ function getTokens({
 }
 
 type Props = {
-  isLoading: boolean;
+  // isLoading: boolean;
   searchTerm: string;
   onTokenItemClick: (value: TokenInfo) => void;
   selectedToken?: TokenInfo;
-} & (
-  | {
-      isSuccess: true;
-      data: TokenInfo[];
-    }
-  | {
-      isSuccess: false;
-      data: undefined;
-    }
-);
+};
+// | {
+//     isSuccess: true;
+//     data: TokenInfo[];
+//   }
+// | {
+//     isSuccess: false;
+//     data: undefined;
+//   }
+// );
 
 const ERC20Interface = new Interface(ERC20ABI) as Erc20Interface;
 const tokenBalancesGasRequirement = { gasRequired: 185_000 };
 
 export default function TokensList({
-  isLoading,
-  isSuccess,
-  data,
+  // isLoading,
+  // isSuccess,
+  // data,
   searchTerm,
   selectedToken,
   onTokenItemClick,
 }: Props) {
-  let { chainId, isAccountActive, isNetworkSupported, account } = useWeb3();
-  const debouncedSearchTerm = useDebounce(searchTerm, 100);
+  let { chainId, isAccountActive, isNetworkSupported, account, signer } =
+    useActiveWeb3();
+  const debouncedQuery = useDebounce(searchTerm, 100);
+
+  const { rawBalance, loading } = useNativeCurrencyBalance();
 
   const handleTokenItemClick = (value: TokenInfo) => {
     onTokenItemClick(value);
   };
 
+  const { allTokens, isLoading, isSuccess } = useAllTokens();
+
+  const filteredTokens: Token[] = useMemo(() => {
+    return Object.values(allTokens).filter(getTokenFilter(debouncedQuery));
+  }, [allTokens, debouncedQuery]);
   
-  const t =getTokens({
-    chainId,
-    isAccountActive,
-    isNetworkSupported,
-    tokens: data,
-    searchTerm: searchTerm,
-  }).map((value) => value.address);
+  const balances = useAllTokenBalances();
   
-  const result = useMultipleContractSingleData(
-    t,
-    ERC20Interface,
-    "balanceOf",
-    useMemo(() => [account], [account]),
-    tokenBalancesGasRequirement
-  );
+  const sortedTokens: Token[] = useMemo(() => {
+    return filteredTokens.sort(tokenComparator.bind(null, balances));
+  }, [balances, filteredTokens]);
+
+  const filteredSortedTokens = useSortTokensByQuery(debouncedQuery, sortedTokens)
+
+  const native = useNativeCurrency();
+  const filteredSortedTokensWithETH: Currency[] = useMemo(() => {
+    if (!native) return filteredSortedTokens
+
+    const s = debouncedQuery.toLowerCase().trim()
+    if (native.symbol?.toLowerCase()?.indexOf(s) !== -1) {
+      return native ? [native, ...filteredSortedTokens] : filteredSortedTokens
+    }
+    return filteredSortedTokens
+  }, [debouncedQuery, native, filteredSortedTokens])
+  
+  console.log({ balances });
+  // const t = getTokens({
+  //   chainId,
+  //   isAccountActive,
+  //   isNetworkSupported,
+  //   tokens: data,
+  //   searchTerm: debouncedSearchTerm,
+  // });
+
+  // const chainInfo = CHAIN_INFO[chainId];
+
+  // const nativeCurrencyTokenInfo: TokenInfo & { balanceInfo: CallState } = {
+  //   ...chainInfo.nativeCurrency,
+  //   address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+  //   chainId,
+  //   logoURI: chainInfo.logoUrl,
+  //   balanceInfo: { result: [{ balance: rawBalance }], loading },
+  // };
+
+  // const result = useMultipleContractSingleData(
+  //   t.map((v) => v.address),
+  //   ERC20Interface,
+  //   "balanceOf",
+  //   useMemo(() => [account], [account]),
+  //   tokenBalancesGasRequirement
+  // );
+  // let counter = 0;
+  // const tokensInfo = t.reduce((acc, current) => {
+  //   const newObj = { ...current, balanceInfo: { ...result[counter] } };
+  //   counter++;
+  //   return [...acc, newObj];
+  // }, []);
+
+  // const tf = result[0].
+
+  // const tokensInfoWithNative = [nativeCurrencyTokenInfo, ...tokensInfo];
+  // console.log(tokensInfo);
 
 
-  console.log(result);
+  // console.log(result);
 
   if (isLoading) {
     return (
@@ -156,34 +206,29 @@ export default function TokensList({
       </List>
     );
   }
-  if (isSuccess) {
-    const tokens = getTokens({
-      chainId,
-      isAccountActive,
-      isNetworkSupported,
-      searchTerm: debouncedSearchTerm,
-      tokens: data,
-    });
-    return (
-      <List>
-        {tokens.length === 0 && "No results found"}
-        {tokens.map((value) => (
-          <TokenListItem
-            disabled={
-              selectedToken
-                ? selectedToken.address.toLowerCase() ===
-                  value.address.toLowerCase()
-                : false
-            }
-            onClick={() => handleTokenItemClick(value)}
-            key={value.address}
-            logoURI={value.logoURI}
-            symbol={value.symbol}
-          />
-        ))}
-      </List>
-    );
-  }
+  // if (isSuccess) {
+  //   return (
+  //     <List>
+  //       {filteredSortedTokensWithETH.length === 0 && "No results found"}
+  //       {filteredSortedTokensWithETH.map((value) => (
+  //         <TokenListItem
+  //           disabled={
+  //             selectedToken
+  //               ? selectedToken.address.toLowerCase() ===
+  //                 value.toLowerCase()
+  //               : false
+  //           }
+  //           onClick={() => handleTokenItemClick(value)}
+  //           key={value.address}
+  //           logoURI={value.logoURI}
+  //           symbol={value.symbol}
+  //           decimals={value.decimals}
+  //           balance={value.balanceInfo.result?.balance}
+  //         />
+  //       ))}
+  //     </List>
+  //   );
+  // }
 
   return (
     <Typography color="error">
