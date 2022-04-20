@@ -36,6 +36,8 @@ import {
 } from "state/swapSlice";
 import { BlockInfo, SwapSettings, TopBar } from "../components";
 import useENSAddress from "hooks/useENSAddress";
+import { maxAmountSpend } from "utils/maxAmountSpend";
+import { Currency, CurrencyAmount } from "@uniswap/sdk-core";
 
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
@@ -144,6 +146,32 @@ const Home: NextPage = () => {
     }
   };
 
+  const maxInputAmount: CurrencyAmount<Currency> | undefined = useMemo(
+    () => maxAmountSpend(currencyBalances[Field.INPUT]),
+    [currencyBalances]
+  );
+  const showMaxButton = Boolean(
+    maxInputAmount?.greaterThan(0) &&
+      !parsedAmounts[Field.INPUT]?.equalTo(maxInputAmount)
+  );
+
+  const handleInputSelect = useCallback(
+    (inputCurrency) => {
+      // setApprovalSubmitted(false) // reset 2 step UI for approvals
+      onCurrencySelection(Field.INPUT, inputCurrency);
+    },
+    [onCurrencySelection]
+  );
+
+  const handleMaxInput = useCallback(() => {
+    maxInputAmount && onUserInput(Field.INPUT, maxInputAmount.toExact());
+  }, [maxInputAmount, onUserInput]);
+
+  const handleOutputSelect = useCallback(
+    (outputCurrency) => onCurrencySelection(Field.OUTPUT, outputCurrency),
+    [onCurrencySelection]
+  );
+
   return (
     <BrandingProvider>
       <TopBar />
@@ -173,7 +201,7 @@ const Home: NextPage = () => {
                 value={formattedAmounts[Field.INPUT]}
                 otherCurrency={currencies[Field.OUTPUT]}
                 onUserInput={handleTypeInput}
-                // onCurrencySelect={(val) => dispatch(setInputToken(val))}
+                onCurrencySelect={handleInputSelect}
               />
             </Grid>
             <Grid display={"flex"} justifyContent={"center"} item xs={12}>
@@ -191,7 +219,7 @@ const Home: NextPage = () => {
                 otherCurrency={currencies[Field.INPUT]}
                 value={formattedAmounts[Field.OUTPUT]}
                 onUserInput={handleTypeOutput}
-                // onCurrencySelect={(val) => dispatch(setOutputToken(val))}
+                onCurrencySelect={handleOutputSelect}
               />
             </Grid>
             <Grid item xs={12}>

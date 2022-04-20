@@ -1,4 +1,3 @@
-import { Interface } from "@ethersproject/abi";
 import FolderIcon from "@mui/icons-material/Folder";
 import {
   ListItemButton,
@@ -9,28 +8,19 @@ import Avatar from "@mui/material/Avatar";
 import List from "@mui/material/List";
 import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
-import { TokenInfo } from "@uniswap/token-lists";
-import { Erc20Interface } from "abis/types/Erc20";
-import { CHAIN_INFO } from "constants/chainInfo";
-import { SupportedChainId } from "constants/chains";
-import { useActiveWeb3, useWeb3 } from "contexts/Web3Provider";
-import { useMultipleContractSingleData } from "hooks/multicall";
-import useDebounce from "hooks/useDebounce";
-import * as React from "react";
-import CurrencyItem from "./CurrencyItem";
-import ERC20ABI from "abis/erc20.json";
-import { useMemo } from "react";
-import { CallState, CallStateResult } from "@uniswap/redux-multicall";
-import useNativeCurrencyBalance from "hooks/useNativeCurrencyBalance";
+import { Currency, Token } from "@uniswap/sdk-core";
 import { useAllTokens } from "hooks/Tokens";
+import useDebounce from "hooks/useDebounce";
 import useNativeCurrency from "hooks/useNativeCurrency";
-import { useAllTokenBalances } from "state/wallet/hooks";
 import { getTokenFilter } from "hooks/useTokenList/filtering";
-import { Token, Currency } from "@uniswap/sdk-core";
 import {
   tokenComparator,
   useSortTokensByQuery,
 } from "hooks/useTokenList/sorting";
+import * as React from "react";
+import { useMemo } from "react";
+import { useAllTokenBalances } from "state/wallet/hooks";
+import CurrencyItem from "./CurrencyItem";
 
 function generate(items: number, element: React.ReactElement) {
   return Array(items)
@@ -47,75 +37,21 @@ function currencyKey(currency: Currency): string {
   return currency.isToken ? currency.address : "ETHER";
 }
 
-interface IGetTokens {
-  chainId?: number;
-  tokens: Currency[];
-  searchTerm: string;
-  isNetworkSupported: boolean;
-  isAccountActive: boolean;
-}
-
-// function getTokens({
-//   chainId,
-//   isAccountActive,
-//   isNetworkSupported,
-//   searchTerm,
-//   tokens,
-// }: IGetTokens) {
-//   if (
-//     !chainId ||
-//     (!isNetworkSupported && isAccountActive) ||
-//     !isAccountActive
-//   ) {
-//     chainId = SupportedChainId.MAINNET;
-//   }
-//   const tokensWithNative = [...tokens];
-//   return tokensWithNative.filter((token) => {
-//     const isChainIdMatch = token.chainId === chainId;
-//     const isStartsWithMatch = token.symbol
-//       .toLowerCase()
-//       .startsWith(searchTerm.toLowerCase());
-//     const isAddressMatch =
-//       token.address.toLowerCase() === searchTerm.toLowerCase();
-//     return isChainIdMatch && (isStartsWithMatch || isAddressMatch);
-//   });
-// }
-
 type Props = {
-  // isLoading: boolean;
   searchTerm: string;
   onCurrencySelect: (value: Currency) => void;
   selectedCurrency?: Currency | null;
 };
-// | {
-//     isSuccess: true;
-//     data: TokenInfo[];
-//   }
-// | {
-//     isSuccess: false;
-//     data: undefined;
-//   }
-// );
 
-const ERC20Interface = new Interface(ERC20ABI) as Erc20Interface;
-const tokenBalancesGasRequirement = { gasRequired: 185_000 };
-
-export default function TokensList({
-  // isLoading,
-  // isSuccess,
-  // data,
+export default function CurrencyList({
   searchTerm,
   selectedCurrency,
-  onCurrencySelect: onTokenItemClick,
+  onCurrencySelect,
 }: Props) {
-  let { chainId, isAccountActive, isNetworkSupported, account, signer } =
-    useActiveWeb3();
   const debouncedQuery = useDebounce(searchTerm, 100);
 
-  const { rawBalance, loading } = useNativeCurrencyBalance();
-
   const handleCurrencySelect = (value: Currency) => {
-    onTokenItemClick(value);
+    onCurrencySelect(value);
   };
 
   const { allTokens, isLoading, isSuccess } = useAllTokens();
@@ -145,46 +81,6 @@ export default function TokensList({
     }
     return filteredSortedTokens;
   }, [debouncedQuery, native, filteredSortedTokens]);
-
-  console.log({ balances });
-  // const t = getTokens({
-  //   chainId,
-  //   isAccountActive,
-  //   isNetworkSupported,
-  //   tokens: data,
-  //   searchTerm: debouncedSearchTerm,
-  // });
-
-  // const chainInfo = CHAIN_INFO[chainId];
-
-  // const nativeCurrencyTokenInfo: TokenInfo & { balanceInfo: CallState } = {
-  //   ...chainInfo.nativeCurrency,
-  //   address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-  //   chainId,
-  //   logoURI: chainInfo.logoUrl,
-  //   balanceInfo: { result: [{ balance: rawBalance }], loading },
-  // };
-
-  // const result = useMultipleContractSingleData(
-  //   t.map((v) => v.address),
-  //   ERC20Interface,
-  //   "balanceOf",
-  //   useMemo(() => [account], [account]),
-  //   tokenBalancesGasRequirement
-  // );
-  // let counter = 0;
-  // const tokensInfo = t.reduce((acc, current) => {
-  //   const newObj = { ...current, balanceInfo: { ...result[counter] } };
-  //   counter++;
-  //   return [...acc, newObj];
-  // }, []);
-
-  // const tf = result[0].
-
-  // const tokensInfoWithNative = [nativeCurrencyTokenInfo, ...tokensInfo];
-  // console.log(tokensInfo);
-
-  // console.log(result);
 
   if (isLoading) {
     return (
@@ -223,7 +119,7 @@ export default function TokensList({
           <CurrencyItem
             key={currencyKey(value)}
             disabled={selectedCurrency?.equals(value)}
-            onClick={() => handleCurrencySelect(value)}
+            onSelect={() => handleCurrencySelect(value)}
             currency={value}
           />
         ))}
