@@ -1,15 +1,28 @@
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { Button, Grid, InputBase, Paper } from "@mui/material";
+import {
+  Button,
+  Chip,
+  Grid,
+  InputBase,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { TokenInfo } from "@uniswap/token-lists";
 import { CurrencyDialog, CurrencyLogo } from "components";
 import { ChangeEvent, useState } from "react";
 import { Currency } from "@uniswap/sdk-core";
+import useCurrencyBalance from "hooks/useCurrencyBalance";
+import { useActiveWeb3 } from "contexts/Web3Provider";
+import { formatCurrencyAmount } from "utils/formatCurrencyAmount";
 
 type Props = {
   otherCurrency?: Currency | null;
   currency?: Currency | null;
   onCurrencySelect: (currency: Currency) => void;
   onUserInput: (val: string) => void;
+  showMaxButton: boolean;
+  onMax?: () => void;
   value: string;
 };
 
@@ -19,9 +32,15 @@ export default function SwapField({
   currency,
   onUserInput,
   value: amount,
+  onMax,
+  showMaxButton,
 }: Props) {
   const [isFocused, setIsFocused] = useState(false);
-  // const;
+  const { account } = useActiveWeb3();
+  const selectedCurrencyBalance = useCurrencyBalance(
+    account ?? undefined,
+    currency ?? undefined
+  );
   const [open, setOpen] = useState(false);
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
@@ -101,23 +120,45 @@ export default function SwapField({
           item
           xs={5}
         >
-          <Button
-            endIcon={<KeyboardArrowDownIcon />}
-            onClick={() => setOpen(true)}
-            startIcon={
-              currency && (
-                <CurrencyLogo
-                  key={currency.symbol}
-                  size={30}
-                  currency={currency}
-                />
-              )
-            }
-            // fullWidth
-            variant="contained"
-          >
-            {currency ? currency.symbol : "Select a token"}
-          </Button>
+          <Stack display={"flex"} alignItems={"end"} spacing={0.5}>
+            <Button
+              endIcon={<KeyboardArrowDownIcon />}
+              onClick={() => setOpen(true)}
+              startIcon={
+                currency && (
+                  <CurrencyLogo
+                    key={currency.symbol}
+                    size={30}
+                    currency={currency}
+                  />
+                )
+              }
+              variant="contained"
+            >
+              {currency ? currency.symbol : "Select a token"}
+            </Button>
+            {selectedCurrencyBalance && (
+              <Stack
+                display={"flex"}
+                spacing={1}
+                alignItems="center"
+                direction="row"
+              >
+                <Typography color={"ButtonText"} variant="body2">
+                  Balance: {formatCurrencyAmount(selectedCurrencyBalance, 4)}
+                </Typography>
+                {showMaxButton && (
+                  <Chip
+                    clickable
+                    onClick={onMax}
+                    label="Max"
+                    size="small"
+                    variant="filled"
+                  />
+                )}
+              </Stack>
+            )}
+          </Stack>
         </Grid>
       </Grid>
       <CurrencyDialog

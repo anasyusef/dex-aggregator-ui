@@ -10,34 +10,25 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { CHAIN_INFO } from "constants/chainInfo";
+import { Currency, CurrencyAmount } from "@uniswap/sdk-core";
 import { SupportedChainId } from "constants/chains";
 import { useWeb3 } from "contexts/Web3Provider";
-import { useCurrency } from "hooks/Tokens";
 import useBlockNumber from "hooks/useBlockNumber";
+import useENSAddress from "hooks/useENSAddress";
 import useIsSwapDisabled from "hooks/useIsSwapDisabled";
+import useWrapCallback, { WrapType } from "hooks/useWrapCallback";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAppDispatch, useAppSelector } from "state";
+import { useCallback, useMemo } from "react";
+import { useAppDispatch } from "state";
 import { Field } from "state/swap/actions";
 import {
   useDerivedSwapInfo,
   useSwapActionHandlers,
   useSwapState,
 } from "state/swap/hooks";
-import useWrapCallback, { WrapType } from "hooks/useWrapCallback";
-import {
-  setInputAmount,
-  setInputToken,
-  setOutputAmount,
-  setOutputToken,
-  swapTokenPositions,
-} from "state/swapSlice";
-import { BlockInfo, SwapSettings, TopBar } from "../components";
-import useENSAddress from "hooks/useENSAddress";
 import { maxAmountSpend } from "utils/maxAmountSpend";
-import { Currency, CurrencyAmount } from "@uniswap/sdk-core";
+import { BlockInfo, SwapSettings, TopBar } from "../components";
 
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
@@ -128,17 +119,6 @@ const Home: NextPage = () => {
   if (!isNetworkSupported) {
     chainId = SupportedChainId.MAINNET;
   }
-  useEffect(() => {
-    const chainInfo = CHAIN_INFO[chainId];
-    dispatch(
-      setInputToken({
-        ...chainInfo.nativeCurrency,
-        logoURI: chainInfo.logoUrl,
-        chainId,
-        address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-      })
-    );
-  }, [chainId, dispatch]);
 
   const handleSwapClick = async () => {
     if (!isAccountActive) {
@@ -156,7 +136,7 @@ const Home: NextPage = () => {
   );
 
   const handleInputSelect = useCallback(
-    (inputCurrency) => {
+    (inputCurrency: Currency) => {
       // setApprovalSubmitted(false) // reset 2 step UI for approvals
       onCurrencySelection(Field.INPUT, inputCurrency);
     },
@@ -168,7 +148,8 @@ const Home: NextPage = () => {
   }, [maxInputAmount, onUserInput]);
 
   const handleOutputSelect = useCallback(
-    (outputCurrency) => onCurrencySelection(Field.OUTPUT, outputCurrency),
+    (outputCurrency: Currency) =>
+      onCurrencySelection(Field.OUTPUT, outputCurrency),
     [onCurrencySelection]
   );
 
@@ -202,11 +183,13 @@ const Home: NextPage = () => {
                 otherCurrency={currencies[Field.OUTPUT]}
                 onUserInput={handleTypeInput}
                 onCurrencySelect={handleInputSelect}
+                onMax={handleMaxInput}
+                showMaxButton={showMaxButton}
               />
             </Grid>
             <Grid display={"flex"} justifyContent={"center"} item xs={12}>
               <IconButton
-                onClick={() => dispatch(swapTokenPositions())}
+                onClick={() => onSwitchTokens()}
                 color="primary"
                 size="large"
               >
@@ -216,6 +199,7 @@ const Home: NextPage = () => {
             <Grid item xs={12}>
               <SwapField
                 currency={currencies[Field.OUTPUT]}
+                showMaxButton={false}
                 otherCurrency={currencies[Field.INPUT]}
                 value={formattedAmounts[Field.OUTPUT]}
                 onUserInput={handleTypeOutput}
@@ -229,7 +213,7 @@ const Home: NextPage = () => {
                 fullWidth
                 variant="contained"
               >
-                {swapInputError}
+                {swapInputError ? swapInputError : "Swap"}
               </Button>
             </Grid>
           </Grid>
