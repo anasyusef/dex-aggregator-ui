@@ -15,20 +15,27 @@ import {
 } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { useState } from "react";
-import { useGetTokensListQuery } from "state/tokenListsApi";
+import { useGetTokensListQuery } from "state/lists/tokenListsApi";
 import { TokenInfo } from "@uniswap/token-lists";
 import TokensList from "./components/TokensList";
+import { tokensToChainTokenMap } from "hooks/useTokenList/utils";
+import { Currency } from "@uniswap/sdk-core";
 
 export interface Props {
   open: boolean;
-  selectedToken?: TokenInfo;
+  selectedCurrency?: Currency;
   onClose: () => void;
-  onSelectToken: (value: TokenInfo) => void;
+  onCurrencySelect: (value: Currency) => void;
 }
 
 export default function CurrencyDialog(props: Props) {
-  const { onClose, onSelectToken, selectedToken, open } = props;
-  const { data, isLoading, isSuccess } = useGetTokensListQuery("");
+  const {
+    onClose,
+    onCurrencySelect: onSelectToken,
+    selectedCurrency: selectedToken,
+    open,
+  } = props;
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleClose = () => {
@@ -36,7 +43,7 @@ export default function CurrencyDialog(props: Props) {
     setSearchTerm("");
   };
 
-  const handleTokenItemClick = (value: TokenInfo) => {
+  const handleTokenItemClick = (value: Currency) => {
     onSelectToken(value);
     setSearchTerm("");
   };
@@ -93,9 +100,9 @@ export default function CurrencyDialog(props: Props) {
           selectedToken={selectedToken}
           onTokenItemClick={handleTokenItemClick}
           searchTerm={searchTerm}
-          isLoading={isLoading}
-          data={data?.tokens}
-          isSuccess={isSuccess as any}
+          // isLoading={isLoading}
+          // data={data?.tokens}
+          // isSuccess={isSuccess as any}
         />
       </DialogContent>
     </Dialog>
