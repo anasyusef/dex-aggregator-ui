@@ -1,4 +1,4 @@
-import TokenIcon from "@/components/TokenIcon";
+import CurrencyLogo from "@/components/CurrencyLogo";
 import {
   ListItemAvatar,
   ListItemButton,
@@ -7,44 +7,36 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
+import { useActiveWeb3 } from "contexts/Web3Provider";
 import { BigNumber, BigNumberish } from "ethers";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
+import useCurrencyBalance from "hooks/useCurrencyBalance";
 import { useState } from "react";
+import { Currency } from "@uniswap/sdk-core";
+import useCurrencyLogoURIs from "hooks/useCurrencyLogoURIs";
 
 interface Props {
-  logoURI?: string;
-  symbol: string;
+  currency: Currency;
   disabled?: boolean;
   onClick: () => void;
   decimals: number;
-  balance?: BigNumber;
 }
 
-export default function TokenListItem({
-  onClick,
-  logoURI,
-  disabled,
-  symbol,
-  decimals,
-  balance,
-}: Props) {
+export default function CurrencyItem({ currency, onClick, disabled }: Props) {
   const SIZE = 30;
-  if (balance) {
-    console.log(formatUnits(balance, decimals));
-  }
+  const { account } = useActiveWeb3();
+  const balance = useCurrencyBalance(account ?? undefined, currency);
   return (
     <ListItemButton disabled={disabled} onClick={onClick} sx={{ px: 2 }}>
       <ListItemAvatar>
-        <TokenIcon size={SIZE} logoURI={logoURI} symbol={symbol} />
+        <CurrencyLogo size={SIZE} currency={currency} />
       </ListItemAvatar>
       <ListItemText
-        primary={<Typography variant="button">{symbol}</Typography>}
+        primary={<Typography variant="button">{currency.symbol}</Typography>}
       />
       <ListItemSecondaryAction>
         {balance ? (
-          <Typography variant="button">
-            {Math.round(+formatUnits(balance, decimals) * 10) / 10}
-          </Typography>
+          <Typography variant="button">{balance.toSignificant(4)}</Typography>
         ) : (
           <Skeleton width={25} />
         )}

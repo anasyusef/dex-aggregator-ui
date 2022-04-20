@@ -4,31 +4,32 @@ import React, { useState } from "react";
 import parseIPFSURI from "utils/parseIPFSURI";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import Image, { ImageProps } from "next/image";
+import { Currency } from "@uniswap/sdk-core";
+import useCurrencyLogoURIs from "hooks/useCurrencyLogoURIs";
 
 type Props = {
   size?: number;
   imageProps?: ImageProps;
-  logoURI?: string;
-  symbol?: string;
+  currency?: Currency | null;
 };
 
-export default function TokenIcon({
+export default function CurrencyLogo({
   size = 20,
   imageProps,
-  logoURI,
-  symbol,
+  currency,
 }: Props) {
+  const logoURIs = useCurrencyLogoURIs(currency);
   const [error, setError] = useState(false);
   return (
     <Avatar sx={{ height: size, width: size }}>
-      {error || !logoURI ? (
+      {error || !logoURIs[0] ? (
         <QuestionMarkIcon color="disabled" />
       ) : (
         <Image
           {...imageProps}
           layout="fill"
-          src={parseIPFSURI(logoURI ?? "")}
-          alt={symbol}
+          src={parseIPFSURI(logoURIs[0] ?? "")}
+          alt={currency?.symbol}
           onError={() => setError(true)}
         />
       )}

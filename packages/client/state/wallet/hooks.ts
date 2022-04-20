@@ -3,7 +3,7 @@ import { useTokenBalances } from "hooks/useCurrencyBalance";
 import { CurrencyAmount, Token } from "@uniswap/sdk-core";
 import { useActiveWeb3 } from "contexts/Web3Provider";
 import { useMemo } from "react";
-import { useAllTokens } from "state/lists/hooks";
+import { useAllTokens } from "hooks/Tokens";
 export {
   default as useCurrencyBalance,
   useCurrencyBalances,

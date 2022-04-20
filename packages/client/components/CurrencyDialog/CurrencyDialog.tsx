@@ -17,13 +17,13 @@ import { Box } from "@mui/system";
 import React, { useState } from "react";
 import { useGetTokensListQuery } from "state/lists/tokenListsApi";
 import { TokenInfo } from "@uniswap/token-lists";
-import TokensList from "./components/TokensList";
+import CurrencyList from "./components/CurrencyList";
 import { tokensToChainTokenMap } from "hooks/useTokenList/utils";
 import { Currency } from "@uniswap/sdk-core";
 
 export interface Props {
   open: boolean;
-  selectedCurrency?: Currency;
+  selectedCurrency?: Currency | null;
   onClose: () => void;
   onCurrencySelect: (value: Currency) => void;
 }
@@ -96,9 +96,9 @@ export default function CurrencyDialog(props: Props) {
         </Stack>
       </ListSubheader>
       <DialogContent dividers>
-        <TokensList
-          selectedToken={selectedToken}
-          onTokenItemClick={handleTokenItemClick}
+        <CurrencyList
+          selectedCurrency={selectedToken}
+          onCurrencySelect={handleTokenItemClick}
           searchTerm={searchTerm}
           // isLoading={isLoading}
           // data={data?.tokens}

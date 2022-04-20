@@ -1,7 +1,7 @@
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { Button, Grid, InputBase, Paper } from "@mui/material";
 import { TokenInfo } from "@uniswap/token-lists";
-import { CurrencyDialog, TokenIcon } from "components";
+import { CurrencyDialog, CurrencyLogo } from "components";
 import { ChangeEvent, useState } from "react";
 import { Currency } from "@uniswap/sdk-core";
 
@@ -26,7 +26,7 @@ export default function SwapField({
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
     if (!Number.isNaN(+value)) {
-      onUserInput(e.target.value);
+      onUserInput(value);
     }
   };
 
@@ -106,11 +106,10 @@ export default function SwapField({
             onClick={() => setOpen(true)}
             startIcon={
               currency && (
-                <TokenIcon
+                <CurrencyLogo
                   key={currency.symbol}
                   size={30}
-                  symbol={currency.symbol}
-                  // logoURI={currency.logoURI}
+                  currency={currency}
                 />
               )
             }

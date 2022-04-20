@@ -173,23 +173,23 @@ export function useDerivedSwapInfo(): {
     let inputError: ReactNode | undefined;
 
     if (!account) {
-      inputError = <Typography>Connect Wallet</Typography>;
+      inputError = "Connect Wallet";
     }
 
     if (!currencies[Field.INPUT] || !currencies[Field.OUTPUT]) {
-      inputError = inputError ?? <Typography>Select a token</Typography>;
+      inputError = inputError ?? "Select a token";
     }
 
     if (!parsedAmount) {
-      inputError = inputError ?? <Typography>Enter an amount</Typography>;
+      inputError = inputError ?? "Enter an amount";
     }
 
     const formattedTo = isAddress(to);
     if (!to || !formattedTo) {
-      inputError = inputError ?? <Typography>Enter a recipient</Typography>;
+      inputError = inputError ?? "Enter a recipient";
     } else {
       if (BAD_RECIPIENT_ADDRESSES[formattedTo]) {
-        inputError = inputError ?? <Typography>Invalid recipient</Typography>;
+        inputError = inputError ?? "Invalid recipient";
       }
     }
 

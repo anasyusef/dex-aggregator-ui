@@ -17,7 +17,7 @@ import { useActiveWeb3, useWeb3 } from "contexts/Web3Provider";
 import { useMultipleContractSingleData } from "hooks/multicall";
 import useDebounce from "hooks/useDebounce";
 import * as React from "react";
-import TokenListItem from "./TokenListItem";
+import CurrencyItem from "./CurrencyItem";
 import ERC20ABI from "abis/erc20.json";
 import { useMemo } from "react";
 import { CallState, CallStateResult } from "@uniswap/redux-multicall";
@@ -27,7 +27,10 @@ import useNativeCurrency from "hooks/useNativeCurrency";
 import { useAllTokenBalances } from "state/wallet/hooks";
 import { getTokenFilter } from "hooks/useTokenList/filtering";
 import { Token, Currency } from "@uniswap/sdk-core";
-import { tokenComparator, useSortTokensByQuery } from "hooks/useTokenList/sorting";
+import {
+  tokenComparator,
+  useSortTokensByQuery,
+} from "hooks/useTokenList/sorting";
 
 function generate(items: number, element: React.ReactElement) {
   return Array(items)
@@ -40,45 +43,49 @@ function generate(items: number, element: React.ReactElement) {
     );
 }
 
+function currencyKey(currency: Currency): string {
+  return currency.isToken ? currency.address : "ETHER";
+}
+
 interface IGetTokens {
   chainId?: number;
-  tokens: TokenInfo[];
+  tokens: Currency[];
   searchTerm: string;
   isNetworkSupported: boolean;
   isAccountActive: boolean;
 }
 
-function getTokens({
-  chainId,
-  isAccountActive,
-  isNetworkSupported,
-  searchTerm,
-  tokens,
-}: IGetTokens) {
-  if (
-    !chainId ||
-    (!isNetworkSupported && isAccountActive) ||
-    !isAccountActive
-  ) {
-    chainId = SupportedChainId.MAINNET;
-  }
-  const tokensWithNative = [...tokens];
-  return tokensWithNative.filter((token) => {
-    const isChainIdMatch = token.chainId === chainId;
-    const isStartsWithMatch = token.symbol
-      .toLowerCase()
-      .startsWith(searchTerm.toLowerCase());
-    const isAddressMatch =
-      token.address.toLowerCase() === searchTerm.toLowerCase();
-    return isChainIdMatch && (isStartsWithMatch || isAddressMatch);
-  });
-}
+// function getTokens({
+//   chainId,
+//   isAccountActive,
+//   isNetworkSupported,
+//   searchTerm,
+//   tokens,
+// }: IGetTokens) {
+//   if (
+//     !chainId ||
+//     (!isNetworkSupported && isAccountActive) ||
+//     !isAccountActive
+//   ) {
+//     chainId = SupportedChainId.MAINNET;
+//   }
+//   const tokensWithNative = [...tokens];
+//   return tokensWithNative.filter((token) => {
+//     const isChainIdMatch = token.chainId === chainId;
+//     const isStartsWithMatch = token.symbol
+//       .toLowerCase()
+//       .startsWith(searchTerm.toLowerCase());
+//     const isAddressMatch =
+//       token.address.toLowerCase() === searchTerm.toLowerCase();
+//     return isChainIdMatch && (isStartsWithMatch || isAddressMatch);
+//   });
+// }
 
 type Props = {
   // isLoading: boolean;
   searchTerm: string;
-  onTokenItemClick: (value: TokenInfo) => void;
-  selectedToken?: TokenInfo;
+  onCurrencySelect: (value: Currency) => void;
+  selectedCurrency?: Currency | null;
 };
 // | {
 //     isSuccess: true;
@@ -98,8 +105,8 @@ export default function TokensList({
   // isSuccess,
   // data,
   searchTerm,
-  selectedToken,
-  onTokenItemClick,
+  selectedCurrency,
+  onCurrencySelect: onTokenItemClick,
 }: Props) {
   let { chainId, isAccountActive, isNetworkSupported, account, signer } =
     useActiveWeb3();
@@ -107,7 +114,7 @@ export default function TokensList({
 
   const { rawBalance, loading } = useNativeCurrencyBalance();
 
-  const handleTokenItemClick = (value: TokenInfo) => {
+  const handleCurrencySelect = (value: Currency) => {
     onTokenItemClick(value);
   };
 
@@ -116,26 +123,29 @@ export default function TokensList({
   const filteredTokens: Token[] = useMemo(() => {
     return Object.values(allTokens).filter(getTokenFilter(debouncedQuery));
   }, [allTokens, debouncedQuery]);
-  
+
   const balances = useAllTokenBalances();
-  
+
   const sortedTokens: Token[] = useMemo(() => {
     return filteredTokens.sort(tokenComparator.bind(null, balances));
   }, [balances, filteredTokens]);
 
-  const filteredSortedTokens = useSortTokensByQuery(debouncedQuery, sortedTokens)
+  const filteredSortedTokens = useSortTokensByQuery(
+    debouncedQuery,
+    sortedTokens
+  );
 
   const native = useNativeCurrency();
   const filteredSortedTokensWithETH: Currency[] = useMemo(() => {
-    if (!native) return filteredSortedTokens
+    if (!native) return filteredSortedTokens;
 
-    const s = debouncedQuery.toLowerCase().trim()
+    const s = debouncedQuery.toLowerCase().trim();
     if (native.symbol?.toLowerCase()?.indexOf(s) !== -1) {
-      return native ? [native, ...filteredSortedTokens] : filteredSortedTokens
+      return native ? [native, ...filteredSortedTokens] : filteredSortedTokens;
     }
-    return filteredSortedTokens
-  }, [debouncedQuery, native, filteredSortedTokens])
-  
+    return filteredSortedTokens;
+  }, [debouncedQuery, native, filteredSortedTokens]);
+
   console.log({ balances });
   // const t = getTokens({
   //   chainId,
@@ -174,7 +184,6 @@ export default function TokensList({
   // const tokensInfoWithNative = [nativeCurrencyTokenInfo, ...tokensInfo];
   // console.log(tokensInfo);
 
-
   // console.log(result);
 
   if (isLoading) {
@@ -206,29 +215,21 @@ export default function TokensList({
       </List>
     );
   }
-  // if (isSuccess) {
-  //   return (
-  //     <List>
-  //       {filteredSortedTokensWithETH.length === 0 && "No results found"}
-  //       {filteredSortedTokensWithETH.map((value) => (
-  //         <TokenListItem
-  //           disabled={
-  //             selectedToken
-  //               ? selectedToken.address.toLowerCase() ===
-  //                 value.toLowerCase()
-  //               : false
-  //           }
-  //           onClick={() => handleTokenItemClick(value)}
-  //           key={value.address}
-  //           logoURI={value.logoURI}
-  //           symbol={value.symbol}
-  //           decimals={value.decimals}
-  //           balance={value.balanceInfo.result?.balance}
-  //         />
-  //       ))}
-  //     </List>
-  //   );
-  // }
+  if (isSuccess) {
+    return (
+      <List>
+        {filteredSortedTokensWithETH.length === 0 && "No results found"}
+        {filteredSortedTokensWithETH.map((value) => (
+          <CurrencyItem
+            key={currencyKey(value)}
+            disabled={selectedCurrency?.equals(value)}
+            onClick={() => handleCurrencySelect(value)}
+            currency={value}
+          />
+        ))}
+      </List>
+    );
+  }
 
   return (
     <Typography color="error">

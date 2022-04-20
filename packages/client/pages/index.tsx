@@ -196,12 +196,12 @@ const Home: NextPage = () => {
             </Grid>
             <Grid item xs={12}>
               <Button
-                disabled={isDisabled}
+                disabled={!isValid}
                 onClick={handleSwapClick}
                 fullWidth
                 variant="contained"
               >
-                {swapMessage}
+                {swapInputError}
               </Button>
             </Grid>
           </Grid>
