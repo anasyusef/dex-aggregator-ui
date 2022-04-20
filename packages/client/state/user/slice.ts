@@ -1,7 +1,8 @@
 import { PaletteMode } from "@mui/material";
 import { createSlice } from "@reduxjs/toolkit";
 import { TokenInfo } from "@uniswap/token-lists";
-import type { RootState } from ".";
+import { DEFAULT_DEADLINE_FROM_NOW } from "constants/misc";
+import type { RootState } from "..";
 
 // Define a type for the slice state
 
@@ -9,17 +10,17 @@ export type GasMode = "normal" | "fast" | "instant";
 interface UserState {
   // signer: ethers.providers.JsonRpcSigner | null
   mode: "dark" | "light";
-  slippageTolerance: number;
+  slippageTolerance: number | "auto";
   transactionDeadline: number;
-  gasMode: GasMode;
+  // gasMode: GasMode;
 }
 
 // Define the initial state using that type
 const initialState: UserState = {
   mode: "dark",
-  slippageTolerance: 0.1,
-  transactionDeadline: 10,
-  gasMode: "fast",
+  slippageTolerance: "auto",
+  transactionDeadline: DEFAULT_DEADLINE_FROM_NOW,
+  // gasMode: "fast",
 };
 
 export const userSlice = createSlice({
@@ -30,27 +31,21 @@ export const userSlice = createSlice({
     setMode: (state, action: { payload: PaletteMode }) => {
       state.mode = action.payload;
     },
-    setSlippageTolerance: (state, action: { payload: string }) => {
-      const parsedPayload = +action.payload;
-      if (!Number.isNaN(parsedPayload) && parsedPayload > 0) {
-        state.slippageTolerance = parsedPayload;
-      }
+    setSlippageTolerance: (state, action) => {
+      state.slippageTolerance = action.payload;
     },
-    setTransactionDeadline: (state, action: { payload: string }) => {
-      const parsedPayload = +action.payload;
-      if (!Number.isNaN(parsedPayload) && parsedPayload > 0) {
-        state.transactionDeadline = parsedPayload;
-      }
-    },
-    setGasMode: (state, action: { payload: GasMode }) => {
-      state.gasMode = action.payload;
+    setTransactionDeadline: (state, action) => {
+      state.transactionDeadline = action.payload;
     },
   },
+  // setGasMode: (state, action: { payload: GasMode }) => {
+  //   state.gasMode = action.payload;
+  // },
 });
 
 export const {
   setMode,
-  setGasMode,
+  // setGasMode,
   setSlippageTolerance,
   setTransactionDeadline,
 } = userSlice.actions;

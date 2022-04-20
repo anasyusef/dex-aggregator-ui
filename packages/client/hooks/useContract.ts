@@ -1,6 +1,7 @@
 import { Contract } from "@ethersproject/contracts";
 import IUniswapV2PairJson from "@uniswap/v2-core/build/IUniswapV2Pair.json";
 import IUniswapV2Router02Json from "@uniswap/v2-periphery/build/IUniswapV2Router02.json";
+import QuoterJson from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json";
 import UniswapInterfaceMulticallJson from "@uniswap/v3-periphery/artifacts/contracts/lens/UniswapInterfaceMulticall.sol/UniswapInterfaceMulticall.json";
 import ARGENT_WALLET_DETECTOR_ABI from "abis/argent-wallet-detector.json";
 import EIP_2612 from "abis/eip_2612.json";
@@ -24,15 +25,17 @@ import {
   ARGENT_WALLET_DETECTOR_ADDRESS,
   ENS_REGISTRAR_ADDRESSES,
   MULTICALL_ADDRESS,
+  QUOTER_ADDRESSES,
 } from "constants/addresses";
 import { WRAPPED_NATIVE_CURRENCY } from "constants/tokens";
 import { useMemo } from "react";
-import { UniswapInterfaceMulticall } from "types/v3";
+import { Quoter, UniswapInterfaceMulticall } from "types/v3";
 
 import { getContract } from "../utils";
 import { useActiveWeb3 } from "contexts/Web3Provider";
 
 const { abi: MulticallABI } = UniswapInterfaceMulticallJson;
+const { abi: QuoterABI } = QuoterJson;
 
 // returns null on errors
 export function useContract<T extends Contract = Contract>(
@@ -137,4 +140,8 @@ export function useInterfaceMulticall() {
     MulticallABI,
     false
   ) as UniswapInterfaceMulticall;
+}
+
+export function useV3Quoter() {
+  return useContract<Quoter>(QUOTER_ADDRESSES, QuoterABI);
 }

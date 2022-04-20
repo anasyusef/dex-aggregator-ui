@@ -1,5 +1,7 @@
 import { constructSameAddressMap } from "utils/constructSameAddressMap";
 import { SupportedChainId } from "./chains";
+import { FACTORY_ADDRESS as V2_FACTORY_ADDRESS } from "@uniswap/v2-sdk";
+import { FACTORY_ADDRESS as V3_FACTORY_ADDRESS } from "@uniswap/v3-sdk";
 
 type AddressMap = { [chainId: number]: string };
 
@@ -9,6 +11,9 @@ export const MULTICALL_ADDRESS: AddressMap = {
     SupportedChainId.POLYGON,
   ]),
 };
+
+export const V2_FACTORY_ADDRESSES: AddressMap =
+  constructSameAddressMap(V2_FACTORY_ADDRESS);
 
 export const MERKLE_DISTRIBUTOR_ADDRESS: AddressMap = {
   [SupportedChainId.MAINNET]: "0x090D4613473dEE047c3f2706764f49E0821D256e",
@@ -23,3 +28,13 @@ export const ENS_REGISTRAR_ADDRESSES: AddressMap = {
 export const SOCKS_CONTROLLER_ADDRESSES: AddressMap = {
   [SupportedChainId.MAINNET]: "0x65770b5283117639760beA3F867b69b3697a91dd",
 };
+
+export const QUOTER_ADDRESSES: AddressMap = constructSameAddressMap(
+  "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
+  [SupportedChainId.POLYGON_MUMBAI, SupportedChainId.POLYGON]
+);
+
+export const V3_CORE_FACTORY_ADDRESSES: AddressMap = constructSameAddressMap(
+  V3_FACTORY_ADDRESS,
+  [SupportedChainId.POLYGON_MUMBAI, SupportedChainId.POLYGON]
+);

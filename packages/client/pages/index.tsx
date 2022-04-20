@@ -173,7 +173,7 @@ const Home: NextPage = () => {
             <Typography display={"flex"} alignItems="center" variant="h6">
               Swap
             </Typography>
-            <SwapSettings />
+            <SwapSettings placeholderSlippage={allowedSlippage} />
           </Stack>
           <Grid container spacing={1}>
             <Grid item xs={12}>

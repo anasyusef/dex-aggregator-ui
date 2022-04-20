@@ -9,7 +9,7 @@ import { CacheProvider, EmotionCache } from "@emotion/react";
 import { Provider, useStore } from "react-redux";
 import store, { RootState, useAppDispatch, useAppSelector } from "state";
 import createEmotionCache from "createEmotionCache";
-import { selectMode, setMode } from "state/userSlice";
+import { selectMode, setMode } from "state/user/slice";
 import { Button, PaletteMode } from "@mui/material";
 import { deepmerge } from "@mui/utils";
 import { getDesignTokens, getThemedComponents } from "theme";

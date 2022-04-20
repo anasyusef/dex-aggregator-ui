@@ -77,7 +77,7 @@ export class InterfaceTrade<
 
   constructor({
     gasUseEstimateUSD,
-    ...routesƒ
+    ...routes
   }: {
     gasUseEstimateUSD?: CurrencyAmount<Token> | undefined | null
     v2Routes: {

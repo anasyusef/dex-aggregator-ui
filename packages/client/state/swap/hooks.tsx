@@ -7,7 +7,7 @@ import {
 } from "@uniswap/sdk-core";
 // import useActiveWeb3React from 'hooks/useActiveWeb3React'
 // import useAutoSlippageTolerance from 'hooks/useAutoSlippageTolerance'
-// import { useBestTrade } from 'hooks/useBestTrade'
+import { useBestTrade } from "hooks/useBestTrade";
 import tryParseCurrencyAmount from "utils/tryParseCurrencyAmount";
 // import { ParsedQs } from 'qs'
 import { ReactNode, useCallback, useEffect, useMemo } from "react";
@@ -34,6 +34,11 @@ import {
 import { SwapState } from "./reducer";
 import { useActiveWeb3 } from "contexts/Web3Provider";
 import { Typography } from "@mui/material";
+import {
+  useUserSlippageTolerance,
+  useUserSlippageToleranceWithDefault,
+} from "state/user/hooks";
+import useAutoSlippageTolerance from "hooks/useAutoSlippageTolerance";
 
 export function useSwapState(): RootState["swap"] {
   return useAppSelector((state) => state.swap);
@@ -139,12 +144,11 @@ export function useDerivedSwapInfo(): {
       ),
     [inputCurrency, isExactIn, outputCurrency, typedValue]
   );
-  // const trade = useBestTrade(
-  //   isExactIn ? TradeType.EXACT_INPUT : TradeType.EXACT_OUTPUT,
-  //   parsedAmount,
-  //   (isExactIn ? outputCurrency : inputCurrency) ?? undefined
-  // );
-  const trade = { state: TradeState.LOADING, trade: undefined };
+  const trade = useBestTrade(
+    isExactIn ? TradeType.EXACT_INPUT : TradeType.EXACT_OUTPUT,
+    parsedAmount,
+    (isExactIn ? outputCurrency : inputCurrency) ?? undefined
+  );
 
   const currencyBalances = useMemo(
     () => ({
@@ -163,11 +167,10 @@ export function useDerivedSwapInfo(): {
   );
 
   // allowed slippage is either auto slippage, or custom user defined slippage if auto slippage disabled
-  // const autoSlippageTolerance = useAutoSlippageTolerance(trade.trade);
-  // const allowedSlippage = useUserSlippageToleranceWithDefault(
-  //   autoSlippageTolerance
-  // );
-  const allowedSlippage = new Percent(40, 30);
+  const autoSlippageTolerance = useAutoSlippageTolerance(trade.trade);
+  const allowedSlippage = useUserSlippageToleranceWithDefault(
+    autoSlippageTolerance
+  );
 
   const inputError = useMemo(() => {
     let inputError: ReactNode | undefined;
@@ -200,9 +203,7 @@ export function useDerivedSwapInfo(): {
     ];
 
     if (balanceIn && amountIn && balanceIn.lessThan(amountIn)) {
-      inputError = (
-        <Typography>Insufficient {amountIn.currency.symbol} balance</Typography>
-      );
+      inputError = `Insufficient ${amountIn.currency.symbol} balance`;
     }
 
     return inputError;
