@@ -38,7 +38,7 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
 type Props = {
   isOpen: boolean;
-  trade: InterfaceTrade<Currency, Currency, TradeType>;
+  trade: InterfaceTrade<Currency, Currency, TradeType> | undefined;
   originalTrade: Trade<Currency, Currency, TradeType> | undefined;
   attemptingTxn: boolean;
   txHash: string | undefined;
@@ -362,7 +362,7 @@ export default function ConfirmSwapDialog({
 
   const confirmationContent = swapErrorMessage ? (
     <TransactionErrorContent onDismiss={onDismiss} message={swapErrorMessage} />
-  ) : (
+  ) : trade ? (
     <SwapDialogContent
       trade={trade}
       onConfirm={onConfirm}
@@ -371,7 +371,7 @@ export default function ConfirmSwapDialog({
       showAcceptChanges={showAcceptChanges}
       onAcceptChanges={onAcceptChanges}
     />
-  );
+  ) : null;
 
   let content = null;
 

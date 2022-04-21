@@ -246,16 +246,16 @@ export function useDerivedSwapInfo(): {
   );
 }
 
-function parseCurrencyFromURLParameter(urlParam: ParsedQs[string]): string {
-  if (typeof urlParam === "string") {
-    const valid = isAddress(urlParam);
-    if (valid) return valid;
-    const upper = urlParam.toUpperCase();
-    if (upper === "ETH") return "ETH";
-    if (upper in TOKEN_SHORTHANDS) return upper;
-  }
-  return "";
-}
+// function parseCurrencyFromURLParameter(urlParam: ParsedQs[string]): string {
+//   if (typeof urlParam === "string") {
+//     const valid = isAddress(urlParam);
+//     if (valid) return valid;
+//     const upper = urlParam.toUpperCase();
+//     if (upper === "ETH") return "ETH";
+//     if (upper in TOKEN_SHORTHANDS) return upper;
+//   }
+//   return "";
+// }
 
 function parseTokenAmountURLParameter(urlParam: any): string {
   return typeof urlParam === "string" && !isNaN(parseFloat(urlParam))
@@ -281,41 +281,41 @@ function validatedRecipient(recipient: any): string | null {
   return null;
 }
 
-export function queryParametersToSwapState(parsedQs: ParsedQs): SwapState {
-  let inputCurrency = parseCurrencyFromURLParameter(parsedQs.inputCurrency);
-  let outputCurrency = parseCurrencyFromURLParameter(parsedQs.outputCurrency);
-  const typedValue = parseTokenAmountURLParameter(parsedQs.exactAmount);
-  const independentField = parseIndependentFieldURLParameter(
-    parsedQs.exactField
-  );
+// export function queryParametersToSwapState(parsedQs: ParsedQs): SwapState {
+//   let inputCurrency = parseCurrencyFromURLParameter(parsedQs.inputCurrency);
+//   let outputCurrency = parseCurrencyFromURLParameter(parsedQs.outputCurrency);
+//   const typedValue = parseTokenAmountURLParameter(parsedQs.exactAmount);
+//   const independentField = parseIndependentFieldURLParameter(
+//     parsedQs.exactField
+//   );
 
-  if (
-    inputCurrency === "" &&
-    outputCurrency === "" &&
-    typedValue === "" &&
-    independentField === Field.INPUT
-  ) {
-    // Defaults to having the native currency selected
-    inputCurrency = "ETH";
-  } else if (inputCurrency === outputCurrency) {
-    // clear output if identical
-    outputCurrency = "";
-  }
+//   if (
+//     inputCurrency === "" &&
+//     outputCurrency === "" &&
+//     typedValue === "" &&
+//     independentField === Field.INPUT
+//   ) {
+//     // Defaults to having the native currency selected
+//     inputCurrency = "ETH";
+//   } else if (inputCurrency === outputCurrency) {
+//     // clear output if identical
+//     outputCurrency = "";
+//   }
 
-  const recipient = validatedRecipient(parsedQs.recipient);
+//   const recipient = validatedRecipient(parsedQs.recipient);
 
-  return {
-    [Field.INPUT]: {
-      currencyId: inputCurrency === "" ? null : inputCurrency ?? null,
-    },
-    [Field.OUTPUT]: {
-      currencyId: outputCurrency === "" ? null : outputCurrency ?? null,
-    },
-    typedValue,
-    independentField,
-    recipient,
-  };
-}
+//   return {
+//     [Field.INPUT]: {
+//       currencyId: inputCurrency === "" ? null : inputCurrency ?? null,
+//     },
+//     [Field.OUTPUT]: {
+//       currencyId: outputCurrency === "" ? null : outputCurrency ?? null,
+//     },
+//     typedValue,
+//     independentField,
+//     recipient,
+//   };
+// }
 
 export function useSwapRouterAddress(
   trade:

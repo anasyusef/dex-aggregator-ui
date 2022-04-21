@@ -6,6 +6,7 @@ import {
 } from "@reduxjs/toolkit/query/react";
 import { Protocol } from "@uniswap/router-sdk";
 import { ChainId } from "@uniswap/smart-order-router";
+import { SupportedChainId } from "constants/chains";
 import { INFURA_NETWORK_URLS } from "constants/infura";
 import {
   AUTO_ROUTER_SUPPORTED_CHAINS,
@@ -15,8 +16,8 @@ import qs from "qs";
 
 import { GetQuoteResult } from "./types";
 
-const routerProviders = new Map<ChainId, BaseProvider>();
-function getRouterProvider(chainId: ChainId): BaseProvider {
+const routerProviders = new Map<SupportedChainId, BaseProvider>();
+function getRouterProvider(chainId: SupportedChainId): BaseProvider {
   const provider = routerProviders.get(chainId);
   if (provider) return provider;
 
@@ -75,9 +76,11 @@ export const routingApi = createApi({
 
         try {
           if (useClientSideRouter) {
-            const chainId = args.tokenInChainId;
+            const chainId = args.tokenInChainId as any as SupportedChainId;
             const params = { chainId, provider: getRouterProvider(chainId) };
-            result = await getClientSideQuote(args, params, { protocols });
+            result = await getClientSideQuote(args, params as any, {
+              protocols,
+            });
           } else {
             const query = qs.stringify({
               ...DEFAULT_QUERY_PARAMS,

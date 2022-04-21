@@ -8,6 +8,7 @@ import {
   IconButton,
   Paper,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { Currency, CurrencyAmount } from "@uniswap/sdk-core";
@@ -15,15 +16,15 @@ import { SupportedChainId } from "constants/chains";
 import { useWeb3 } from "contexts/Web3Provider";
 import useBlockNumber from "hooks/useBlockNumber";
 import useENSAddress from "hooks/useENSAddress";
-import useIsSwapDisabled from "hooks/useIsSwapDisabled";
 import { useUSDCValue } from "hooks/useUSDCPrice";
-import useWrapCallback, { WrapType } from "hooks/useWrapCallback";
+import useWrapCallback, { useErrorText, WrapType } from "hooks/useWrapCallback";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppDispatch } from "state";
 import { TradeState } from "state/routing/types";
 import { Field } from "state/swap/actions";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   useDerivedSwapInfo,
   useSwapActionHandlers,
@@ -36,17 +37,29 @@ import { maxAmountSpend } from "utils/maxAmountSpend";
 import {
   BlockInfo,
   ConfirmSwapDialog,
+  CurrencyLogo,
   SwapDetails,
   SwapSettings,
   TopBar,
 } from "../components";
 import JSBI from "jsbi";
 import confirmPriceImpactWithoutFee from "utils/confirmPriceImpactWithoutFee";
-import { useApprovalOptimizedTrade } from "hooks/useApproveCallback";
-import { useERC20PermitFromTrade } from "hooks/useERC20Permit";
+import {
+  ApprovalState,
+  useApprovalOptimizedTrade,
+  useApproveCallbackFromTrade,
+} from "hooks/useApproveCallback";
+import {
+  useERC20PermitFromTrade,
+  UseERC20PermitState,
+} from "hooks/useERC20Permit";
 import { useUserTransactionTTL } from "state/user/hooks";
 import useTransactionDeadline from "hooks/useTransactionDeadline";
 import { useSwapCallback } from "hooks/useSwapCallback";
+import useIsArgentWallet from "hooks/useIsArgentWallet";
+import { Trade as V2Trade } from "@uniswap/v2-sdk";
+import { Trade as V3Trade } from "@uniswap/v3-sdk";
+import { warningSeverity } from "utils/prices";
 
 const Home: NextPage = () => {
   const dispatch = useAppDispatch();
@@ -89,6 +102,8 @@ const Home: NextPage = () => {
     currencies[Field.OUTPUT],
     typedValue
   );
+
+  const wrapErrorText = useErrorText({ wrapInputError });
   const showWrap: boolean = wrapType !== WrapType.NOT_APPLICABLE;
   const { address: recipientAddress } = useENSAddress(recipient);
 
@@ -170,7 +185,6 @@ const Home: NextPage = () => {
     isAccountActive,
     connect,
   } = useWeb3();
-  const { isDisabled, message: swapMessage } = useIsSwapDisabled();
   let chainId = chainIdWeb3 || SupportedChainId.MAINNET;
   if (!isNetworkSupported) {
     chainId = SupportedChainId.MAINNET;
@@ -203,7 +217,7 @@ const Home: NextPage = () => {
 
   const handleInputSelect = useCallback(
     (inputCurrency: Currency) => {
-      // setApprovalSubmitted(false) // reset 2 step UI for approvals
+      setApprovalSubmitted(false); // reset 2 step UI for approvals
       onCurrencySelection(Field.INPUT, inputCurrency);
     },
     [onCurrencySelection]
@@ -259,6 +273,23 @@ const Home: NextPage = () => {
     transactionDeadline
   );
 
+  const handleConnect = async () => {
+    await connect();
+  };
+
+  const approvalOptimizedTradeString =
+    approvalOptimizedTrade instanceof V2Trade
+      ? "V2SwapRouter"
+      : approvalOptimizedTrade instanceof V3Trade
+      ? "V3SwapRouter"
+      : "SwapRouter";
+
+  // check whether the user has approved the router on the input token
+  const [approvalState, approveCallback] = useApproveCallbackFromTrade(
+    approvalOptimizedTrade,
+    allowedSlippage
+  );
+
   // the callback to execute the swap
   const { callback: swapCallback, error: swapCallbackError } = useSwapCallback(
     approvalOptimizedTrade,
@@ -266,6 +297,42 @@ const Home: NextPage = () => {
     recipient,
     signatureData
   );
+
+  const isArgentWallet = useIsArgentWallet();
+
+  // warnings on the greater of fiat value price impact and execution price impact
+  const priceImpactSeverity = useMemo(() => {
+    const executionPriceImpact = trade?.priceImpact;
+    return warningSeverity(
+      executionPriceImpact && priceImpact
+        ? executionPriceImpact.greaterThan(priceImpact)
+          ? executionPriceImpact
+          : priceImpact
+        : executionPriceImpact ?? priceImpact
+    );
+  }, [priceImpact, trade]);
+
+  // check if user has gone through approval process, used to show two step buttons, reset on token change
+  const [approvalSubmitted, setApprovalSubmitted] = useState<boolean>(false);
+
+  // mark when a user has submitted an approval, reset onTokenSelection for input field
+  useEffect(() => {
+    if (approvalState === ApprovalState.PENDING) {
+      setApprovalSubmitted(true);
+    }
+  }, [approvalState, approvalSubmitted]);
+
+  // show approve flow when: no error on inputs, not approved or pending, or approved in current session
+  // never show if price impact is above threshold in non expert mode
+  const showApproveFlow =
+    !isArgentWallet &&
+    !swapInputError &&
+    (approvalState === ApprovalState.NOT_APPROVED ||
+      approvalState === ApprovalState.PENDING ||
+      (approvalSubmitted && approvalState === ApprovalState.APPROVED)) &&
+    !(priceImpactSeverity > 3);
+
+  const priceImpactTooHigh = priceImpactSeverity > 3;
 
   const handleSwap = useCallback(() => {
     if (!swapCallback) {
@@ -301,6 +368,24 @@ const Home: NextPage = () => {
         });
       });
   }, [swapCallback, priceImpact, tradeToConfirm, showConfirm]);
+
+  const handleApprove = useCallback(async () => {
+    if (
+      signatureState === UseERC20PermitState.NOT_SIGNED &&
+      gatherPermitSignature
+    ) {
+      try {
+        await gatherPermitSignature();
+      } catch (error) {
+        // try to approve if gatherPermitSignature failed for any reason other than the user rejecting it
+        if ((error as any)?.code !== 4001) {
+          await approveCallback();
+        }
+      }
+    } else {
+      await approveCallback();
+    }
+  }, [signatureState, gatherPermitSignature, approveCallback]);
 
   return (
     <BrandingProvider>
@@ -388,14 +473,63 @@ const Home: NextPage = () => {
                 )}
             </Grid>
             <Grid item xs={12}>
-              <Button
-                disabled={!isValid}
-                onClick={handleSwapClick}
-                fullWidth
-                variant="contained"
-              >
-                {swapInputError ? swapInputError : "Swap"}
-              </Button>
+              {!isAccountActive ? (
+                <Button variant="contained" fullWidth onClick={handleConnect}>
+                  Connect Wallet
+                </Button>
+              ) : showWrap ? (
+                <Button
+                  onClick={onWrap}
+                  disabled={!!wrapInputError}
+                  variant="contained"
+                  fullWidth
+                >
+                  {wrapInputError
+                    ? wrapErrorText
+                    : wrapType === WrapType.WRAP
+                    ? "Wrap"
+                    : wrapType === WrapType.UNWRAP
+                    ? "Unwrap"
+                    : null}
+                </Button>
+              ) : showApproveFlow ? (
+                <Button
+                  startIcon={
+                    <CurrencyLogo currency={currencies[Field.INPUT]} />
+                  }
+                  endIcon={
+                    <Tooltip
+                      title={`You must allow the smart contract to use your ${
+                        currencies[Field.INPUT]?.symbol
+                      }. You only have to do this once per token.`}
+                    >
+                      <InfoOutlinedIcon />
+                    </Tooltip>
+                  }
+                  onClick={handleApprove}
+                  variant="contained"
+                  fullWidth
+                >
+                  Allow the protocol to use your{" "}
+                  {currencies[Field.INPUT]?.symbol}
+                </Button>
+              ) : (
+                <Button
+                  disabled={
+                    !isValid ||
+                    routeIsSyncing ||
+                    routeIsLoading ||
+                    (approvalState !== ApprovalState.APPROVED &&
+                      signatureState !== UseERC20PermitState.SIGNED) ||
+                    priceImpactTooHigh
+                  }
+                  onClick={handleSwapClick}
+                  fullWidth
+                  variant="contained"
+                >
+                  {swapInputError ? swapInputError : "Swap"}
+                </Button>
+              )}
             </Grid>
           </Grid>
         </Paper>

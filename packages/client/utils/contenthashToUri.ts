@@ -25,12 +25,12 @@ export default function contenthashToUri(contenthash: string): string {
   switch (codec) {
     case "ipfs-ns": {
       const unprefixedData = rmPrefix(data);
-      const cid = new CID(unprefixedData);
+      const cid = new CID(unprefixedData as any);
       return `ipfs://${toB58String(cid.multihash)}`;
     }
     case "ipns-ns": {
       const unprefixedData = rmPrefix(data);
-      const cid = new CID(unprefixedData);
+      const cid = new CID(unprefixedData as any);
       const multihash = decode(cid.multihash);
       if (multihash.name === "identity") {
         return `ipns://${UTF_8_DECODER.decode(multihash.digest).trim()}`;

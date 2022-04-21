@@ -16,3 +16,5 @@
 //   console.log(query)
 // //   return useMemo(() => parsedQueryString(query), [query])
 // }
+
+export {};
