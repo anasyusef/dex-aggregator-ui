@@ -3,6 +3,7 @@ import { CurrencyAmount, Token, Percent } from "@uniswap/sdk-core";
 import { Stack, Typography, useTheme } from "@mui/material";
 import { formatCurrencyAmount } from "utils/formatCurrencyAmount";
 import { warningSeverity } from "utils/prices";
+import usePriceImpactColor from "hooks/usePriceImpactColor";
 
 type Props = {
   fiatValue: CurrencyAmount<Token> | null | undefined;
@@ -10,15 +11,7 @@ type Props = {
 };
 
 export default function FiatValue({ fiatValue, priceImpact }: Props) {
-  const theme = useTheme();
-  const priceImpactColor = useMemo(() => {
-    if (!priceImpact) return undefined;
-    if (priceImpact.lessThan("0")) return theme.palette.success.main;
-    const severity = warningSeverity(priceImpact);
-    if (severity < 1) return theme.typography.subtitle2.color;
-    if (severity < 3) return theme.palette.warning.main;
-    return theme.palette.error.main;
-  }, [priceImpact, theme]);
+  const priceImpactColor = usePriceImpactColor(priceImpact);
   if (!fiatValue) return null;
   return (
     <Stack spacing={1} direction="row">

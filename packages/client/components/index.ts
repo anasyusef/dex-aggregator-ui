@@ -6,4 +6,7 @@ export { default as CurrencyDialog } from "./CurrencyDialog";
 export { default as CurrencyLogo } from "./CurrencyLogo";
 export { default as SwapSettings } from "./SwapSettings";
 export { default as BlockInfo } from "./BlockInfo";
+export { default as SwapDetails } from "./SwapDetails";
+export { default as DoubleCurrencyLogo } from "./DoubleCurrencyLogo";
+export { default as ConfirmSwapDialog } from "./ConfirmSwapDialog";
 export { MulticallUpdater } from "state/multicall";

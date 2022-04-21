@@ -26,6 +26,7 @@ import {
   ENS_REGISTRAR_ADDRESSES,
   MULTICALL_ADDRESS,
   QUOTER_ADDRESSES,
+  V2_ROUTER_ADDRESS,
 } from "constants/addresses";
 import { WRAPPED_NATIVE_CURRENCY } from "constants/tokens";
 import { useMemo } from "react";
@@ -35,6 +36,7 @@ import { getContract } from "../utils";
 import { useActiveWeb3 } from "contexts/Web3Provider";
 
 const { abi: MulticallABI } = UniswapInterfaceMulticallJson;
+const { abi: IUniswapV2Router02ABI } = IUniswapV2Router02Json
 const { abi: QuoterABI } = QuoterJson;
 
 // returns null on errors
@@ -144,4 +146,8 @@ export function useInterfaceMulticall() {
 
 export function useV3Quoter() {
   return useContract<Quoter>(QUOTER_ADDRESSES, QuoterABI);
+}
+
+export function useV2RouterContract(): Contract | null {
+  return useContract(V2_ROUTER_ADDRESS, IUniswapV2Router02ABI, true)
 }

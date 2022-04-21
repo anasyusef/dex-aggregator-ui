@@ -99,7 +99,7 @@ export default function SwapField({
           <Box sx={{ ml: 2 }}>
             {loading ? (
               <Skeleton
-                variant="rectangular"
+                variant="text"
                 height={theme.typography.h4.fontSize}
                 width={100}
               />

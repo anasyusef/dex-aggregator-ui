@@ -1,18 +1,21 @@
 // import { Trans } from '@lingui/macro'
+// import useActiveWeb3React from 'hooks/useActiveWeb3React'
+// import useAutoSlippageTolerance from 'hooks/useAutoSlippageTolerance'
+import { useBestTrade } from "hooks/useBestTrade";
+import { Trade } from "@uniswap/router-sdk";
 import {
   Currency,
   CurrencyAmount,
   Percent,
+  Token,
   TradeType,
 } from "@uniswap/sdk-core";
-// import useActiveWeb3React from 'hooks/useActiveWeb3React'
-// import useAutoSlippageTolerance from 'hooks/useAutoSlippageTolerance'
-import { useBestTrade } from "hooks/useBestTrade";
+import { Pair, Route as V2Route, Trade as V2Trade } from "@uniswap/v2-sdk";
+import { Pool, Route as V3Route, Trade as V3Trade } from "@uniswap/v3-sdk";
 import tryParseCurrencyAmount from "utils/tryParseCurrencyAmount";
 // import { ParsedQs } from 'qs'
 import { ReactNode, useCallback, useEffect, useMemo } from "react";
 import { RootState, useAppDispatch, useAppSelector } from "state";
-import { Trade } from "@uniswap/sdk";
 import { InterfaceTrade, TradeState } from "state/routing/types";
 // import { useUserSlippageToleranceWithDefault } from 'state/user/hooks'
 
@@ -39,6 +42,12 @@ import {
   useUserSlippageToleranceWithDefault,
 } from "state/user/hooks";
 import useAutoSlippageTolerance from "hooks/useAutoSlippageTolerance";
+import { useApproval } from "hooks/useApproval";
+import {
+  V2_ROUTER_ADDRESS,
+  V3_ROUTER_ADDRESS,
+  SWAP_ROUTER_ADDRESSES,
+} from "constants/addresses";
 
 export function useSwapState(): RootState["swap"] {
   return useAppSelector((state) => state.swap);
@@ -306,6 +315,52 @@ export function queryParametersToSwapState(parsedQs: ParsedQs): SwapState {
     independentField,
     recipient,
   };
+}
+
+export function useSwapRouterAddress(
+  trade:
+    | V2Trade<Currency, Currency, TradeType>
+    | V3Trade<Currency, Currency, TradeType>
+    | Trade<Currency, Currency, TradeType>
+    | undefined
+) {
+  const { chainId } = useActiveWeb3();
+  return useMemo(
+    () =>
+      chainId
+        ? trade instanceof V2Trade
+          ? V2_ROUTER_ADDRESS[chainId]
+          : trade instanceof V3Trade
+          ? V3_ROUTER_ADDRESS[chainId]
+          : SWAP_ROUTER_ADDRESSES[chainId]
+        : undefined,
+    [chainId, trade]
+  );
+}
+
+// wraps useApproveCallback in the context of a swap
+export default function useSwapApproval(
+  trade:
+    | V2Trade<Currency, Currency, TradeType>
+    | V3Trade<Currency, Currency, TradeType>
+    | Trade<Currency, Currency, TradeType>
+    | undefined,
+  allowedSlippage: Percent,
+  useIsPendingApproval: (token?: Token, spender?: string) => boolean,
+  amount?: CurrencyAmount<Currency> // defaults to trade.maximumAmountIn(allowedSlippage)
+) {
+  const amountToApprove = useMemo(
+    () =>
+      amount ||
+      (trade && trade.inputAmount.currency.isToken
+        ? trade.maximumAmountIn(allowedSlippage)
+        : undefined),
+    [amount, trade, allowedSlippage]
+  );
+  const spender = useSwapRouterAddress(trade);
+
+  const approval = useApproval(amountToApprove, spender, useIsPendingApproval);
+  return approval;
 }
 
 // // updates the swap state to use the defaults for a given network

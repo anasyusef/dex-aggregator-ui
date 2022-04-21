@@ -5,9 +5,27 @@ import {
   Token,
   WETH9,
 } from "@uniswap/sdk-core";
+import { UNI_ADDRESS } from "./addresses";
 import invariant from "tiny-invariant";
 
 import { SupportedChainId } from "./chains";
+
+export const UNI: { [chainId: number]: Token } = {
+  [SupportedChainId.MAINNET]: new Token(
+    SupportedChainId.MAINNET,
+    UNI_ADDRESS[1],
+    18,
+    "UNI",
+    "Uniswap"
+  ),
+  [SupportedChainId.ROPSTEN]: new Token(
+    SupportedChainId.ROPSTEN,
+    UNI_ADDRESS[3],
+    18,
+    "UNI",
+    "Uniswap"
+  ),
+};
 
 export const USDC_MAINNET = new Token(
   SupportedChainId.MAINNET,

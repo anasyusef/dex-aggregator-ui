@@ -5,8 +5,9 @@ const nextConfig = {
     domains: [
       "assets.coingecko.com",
       "raw.githubusercontent.com",
+      "s2.coinmarketcap.com",
       "*.ipfs.dweb.link",
-      "cloudflare-ipfs.com"
+      "cloudflare-ipfs.com",
     ],
   },
 };

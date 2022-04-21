@@ -11,12 +11,14 @@ type Props = {
   size?: number;
   imageProps?: ImageProps;
   currency?: Currency | null;
+  style?: React.CSSProperties;
 };
 
 export default function CurrencyLogo({
   size = 20,
   imageProps,
   currency,
+  style,
 }: Props) {
   const logoURIs = useCurrencyLogoURIs(currency);
   const [error, setError] = useState(false);
