@@ -12,6 +12,7 @@ import {
   OutlinedInput,
   Stack,
   Typography,
+  useTheme
 } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { useState } from "react";
@@ -36,6 +37,8 @@ export default function CurrencyDialog(props: Props) {
     open,
   } = props;
 
+  const theme = useTheme()
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleClose = () => {
@@ -51,7 +54,7 @@ export default function CurrencyDialog(props: Props) {
   return (
     <Dialog scroll="paper" fullWidth onClose={handleClose} open={open}>
       <Box
-        sx={{ backgroundColor: (theme) => theme.palette.background.default }}
+        sx={{ backgroundColor: theme.palette.background.default }}
       >
         <DialogTitle sx={{ position: "sticky", top: "12px" }}>
           Select a token

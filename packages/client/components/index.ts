@@ -9,4 +9,6 @@ export { default as BlockInfo } from "./BlockInfo";
 export { default as SwapDetails } from "./SwapDetails";
 export { default as DoubleCurrencyLogo } from "./DoubleCurrencyLogo";
 export { default as ConfirmSwapDialog } from "./ConfirmSwapDialog";
+export { default as Popups } from "./Popups";
+export { default as TransactionSummary } from "./TransactionSummary";
 export { MulticallUpdater } from "state/multicall";

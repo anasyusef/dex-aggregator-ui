@@ -38,6 +38,7 @@ import {
   BlockInfo,
   ConfirmSwapDialog,
   CurrencyLogo,
+  Popups,
   SwapDetails,
   SwapSettings,
   TopBar,
@@ -60,10 +61,10 @@ import useIsArgentWallet from "hooks/useIsArgentWallet";
 import { Trade as V2Trade } from "@uniswap/v2-sdk";
 import { Trade as V3Trade } from "@uniswap/v3-sdk";
 import { warningSeverity } from "utils/prices";
+import { useAddPopup } from "state/application/hooks";
+import { DEFAULT_TXN_DISMISS_MS } from "constants/misc";
 
 const Home: NextPage = () => {
-  const dispatch = useAppDispatch();
-  const { query } = useRouter();
   const { independentField, typedValue, recipient } = useSwapState();
   const [showInverted, setShowInverted] = useState(false);
   const {
@@ -387,6 +388,8 @@ const Home: NextPage = () => {
     }
   }, [signatureState, gatherPermitSignature, approveCallback]);
 
+  const addPopup = useAddPopup();
+
   return (
     <BrandingProvider>
       <TopBar />
@@ -507,6 +510,14 @@ const Home: NextPage = () => {
                     </Tooltip>
                   }
                   onClick={handleApprove}
+                  disabled={
+                    !isValid ||
+                    routeIsSyncing ||
+                    routeIsLoading ||
+                    (approvalState !== ApprovalState.APPROVED &&
+                      signatureState !== UseERC20PermitState.SIGNED) ||
+                    priceImpactTooHigh
+                  }
                   variant="contained"
                   fullWidth
                 >
@@ -519,9 +530,8 @@ const Home: NextPage = () => {
                     !isValid ||
                     routeIsSyncing ||
                     routeIsLoading ||
-                    (approvalState !== ApprovalState.APPROVED &&
-                      signatureState !== UseERC20PermitState.SIGNED) ||
-                    priceImpactTooHigh
+                    priceImpactTooHigh ||
+                    !!swapCallbackError
                   }
                   onClick={handleSwapClick}
                   fullWidth
@@ -535,6 +545,7 @@ const Home: NextPage = () => {
         </Paper>
       </Container>
       <BlockInfo />
+      <Popups />
     </BrandingProvider>
   );
 };

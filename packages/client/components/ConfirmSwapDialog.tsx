@@ -1,3 +1,6 @@
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {
   Alert,
   Button,
@@ -6,35 +9,27 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
-  IconButton,
-  Link,
+  Grid, Link,
   Paper,
   Stack,
-  Typography,
-  useMediaQuery,
-  useTheme,
-  useThemeProps,
+  Typography, useTheme
 } from "@mui/material";
+import { Box } from "@mui/system";
 import { Trade } from "@uniswap/router-sdk";
 import { Currency, Percent, TradeType } from "@uniswap/sdk-core";
-import { useUSDCValue } from "hooks/useUSDCPrice";
-import { ReactNode, useCallback, useMemo, useState } from "react";
-import { InterfaceTrade } from "state/routing/types";
-import { tradeMeaningfullyDiffers } from "utils/tradeMeaningFullyDiffer";
-import CurrencyLogo from "./CurrencyLogo";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { Box } from "@mui/system";
-import FiatValue from "./SwapField/components/FiatValue";
-import TradePrice from "./SwapDetails/components/TradePrice";
-import AdvancedSwapDetails from "./SwapDetails/components/AdvancedSwapDetails";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useActiveWeb3 } from "contexts/Web3Provider";
 import useAddTokenToMetamask from "hooks/useAddTokenToMetamask";
-import { ExplorerDataType, getExplorerLink } from "utils/getExplorerLink";
-import MetaMaskLogo from "public/assets/images/metamask.png";
+import { useUSDCValue } from "hooks/useUSDCPrice";
 import Image from "next/image";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import MetaMaskLogo from "public/assets/images/metamask.png";
+import { ReactNode, useMemo, useState } from "react";
+import { InterfaceTrade } from "state/routing/types";
+import { ExplorerDataType, getExplorerLink } from "utils/getExplorerLink";
+import { tradeMeaningfullyDiffers } from "utils/tradeMeaningFullyDiffer";
+import CurrencyLogo from "./CurrencyLogo";
+import AdvancedSwapDetails from "./SwapDetails/components/AdvancedSwapDetails";
+import TradePrice from "./SwapDetails/components/TradePrice";
+import FiatValue from "./SwapField/components/FiatValue";
 
 type Props = {
   isOpen: boolean;
@@ -194,12 +189,13 @@ function TransactionErrorContent({
   message: ReactNode;
   onDismiss: () => void;
 }) {
+  const theme = useTheme();
   return (
     <Box sx={{ p: 4 }}>
       <DialogContent>
         <Stack display={"flex"} justifyContent={"center"} spacing={1}>
           <Box
-            sx={{ fontSize: (theme) => (theme.typography as any).h2.fontSize }}
+            sx={{ fontSize: theme.typography.h2.fontSize }}
             display={"flex"}
             justifyContent="center"
           >
@@ -267,7 +263,7 @@ function TransactionSubmittedContent({
       <DialogContent>
         <Stack display={"flex"} justifyContent={"center"} spacing={1}>
           <Box
-            sx={{ fontSize: (theme) => (theme.typography as any).h2.fontSize }}
+            sx={{ fontSize: theme.typography.h2.fontSize }}
             display={"flex"}
             justifyContent="center"
           >
@@ -374,8 +370,6 @@ export default function ConfirmSwapDialog({
   ) : null;
 
   let content = null;
-
-  console.log({ attemptingTxn, txHash });
 
   if (attemptingTxn) {
     content = <ConfirmationPendingContent pendingText={pendingText} />;

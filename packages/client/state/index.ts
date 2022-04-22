@@ -6,16 +6,18 @@ import multicall from "./multicall";
 import swap from "./swap/reducer";
 import transactions from "./transactions/reducer";
 import user from "./user/slice";
-import web3Reducer from "./web3Slice";
+import app from "./application/slice";
+import web3 from "./web3Slice";
 import { routingApi } from "./routing/slice";
 import { save, load } from "redux-localstorage-simple";
 
-const PERSISTED_KEYS: string[] = ["user"];
+const PERSISTED_KEYS: string[] = ["user", "transactions"];
 
 export function makeStore() {
   return configureStore({
     reducer: {
-      web3: web3Reducer,
+      web3,
+      app,
       user,
       swap,
       transactions,
@@ -29,7 +31,7 @@ export function makeStore() {
         .concat(tokensApi.middleware)
         .concat(routingApi.middleware)
         .concat(save({ states: PERSISTED_KEYS, debounce: 400 })),
-    preloadedState: load({ states: PERSISTED_KEYS }),
+    preloadedState: load({ states: PERSISTED_KEYS, disableWarnings: true }),
   });
 }
 

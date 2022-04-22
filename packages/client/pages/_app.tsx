@@ -2,8 +2,12 @@ import * as React from "react";
 import Head from "next/head";
 import { AppProps } from "next/app";
 import { createTheme } from "@mui/material/styles";
-import { MulticallUpdater, ThemeProvider } from "components";
-import { ThemeProvider as MuiThemeProvider, useTheme } from "@mui/material";
+import { MulticallUpdater, PopupItem, ThemeProvider } from "components";
+import {
+  IconButton,
+  ThemeProvider as MuiThemeProvider,
+  useTheme,
+} from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { CacheProvider, EmotionCache } from "@emotion/react";
 import { Provider, useStore } from "react-redux";
@@ -13,6 +17,7 @@ import { selectMode, setMode } from "state/user/slice";
 import { Button, PaletteMode } from "@mui/material";
 import { deepmerge } from "@mui/utils";
 import { getDesignTokens, getThemedComponents } from "theme";
+import TransactionUpdater from "state/transactions/updater";
 import Web3Provider from "contexts/Web3Provider";
 import { ReactNode } from "react";
 import { BlockNumberProvider } from "hooks/useBlockNumber";
@@ -58,8 +63,9 @@ export default function MyApp(props: MyAppProps) {
             <ThemeProvider>
               <CssBaseline />
               <Component {...pageProps} />
+              <MulticallUpdater />
+              <TransactionUpdater />
             </ThemeProvider>
-            <MulticallUpdater />
           </BlockNumberProvider>
         </Web3Provider>
       </CacheProvider>

@@ -1,14 +1,22 @@
 import ErrorIcon from "@mui/icons-material/Error";
-import { Button, Divider, Stack, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  Divider,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { ProviderIcon } from "components";
 import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
-import {
-  useActiveWeb3,
-  useWeb3,
-} from "contexts/Web3Provider";
+import { useActiveWeb3, useWeb3 } from "contexts/Web3Provider";
 import useNativeCurrencyBalance from "hooks/useNativeCurrencyBalance";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  useAllTransactions,
+  isTransactionRecent,
+} from "state/transactions/hooks";
+import { TransactionDetails } from "state/transactions/reducer";
 import { shortenAddress } from "utils";
 import WalletDialog from "./WalletDialog";
 
@@ -23,6 +31,26 @@ export default function Wallet({}: Props) {
   const handleConnect = async () => {
     await connect();
   };
+
+  // we want the latest one to come first, so return negative if a is after b
+  function newTransactionsFirst(a: TransactionDetails, b: TransactionDetails) {
+    return b.addedTime - a.addedTime;
+  }
+
+  const allTransactions = useAllTransactions();
+  const sortedRecentTransactions = useMemo(() => {
+    const txs = Object.values(allTransactions);
+    return txs.filter(isTransactionRecent).sort(newTransactionsFirst);
+  }, [allTransactions]);
+
+  const pending = sortedRecentTransactions
+    .filter((tx) => !tx.receipt)
+    .map((tx) => tx.hash);
+  const confirmed = sortedRecentTransactions
+    .filter((tx) => tx.receipt)
+    .map((tx) => tx.hash);
+
+  const hasPendingTransactions = !!pending.length;
 
   if (!isNetworkSupported) {
     return (
@@ -44,23 +72,41 @@ export default function Wallet({}: Props) {
 
   return (
     <>
-      <Button
-        endIcon={<ProviderIcon />}
-        onClick={() => setOpen(true)}
-        variant="outlined"
-      >
-        <Stack
-          direction={"row"}
-          divider={<Divider orientation="vertical" flexItem />}
-          gap={2}
+      {hasPendingTransactions ? (
+        <Button
+          variant="contained"
+          onClick={() => setOpen(true)}
+          startIcon={<CircularProgress color="inherit" size={20} />}
         >
-          <Typography variant="button">
-            {Math.round(+formattedBalance * 10) / 10} {nativeCurrency.symbol}
-          </Typography>
-          {shortenAddress(account as string)}
-        </Stack>
-      </Button>
-      <WalletDialog open={open} onClose={() => setOpen(false)} />
+          {pending.length} Pending
+        </Button>
+      ) : (
+        <>
+          <Button
+            endIcon={<ProviderIcon />}
+            onClick={() => setOpen(true)}
+            variant="outlined"
+          >
+            <Stack
+              direction={"row"}
+              divider={<Divider orientation="vertical" flexItem />}
+              gap={2}
+            >
+              <Typography variant="button">
+                {Math.round(+formattedBalance * 10) / 10}{" "}
+                {nativeCurrency.symbol}
+              </Typography>
+              {shortenAddress(account as string)}
+            </Stack>
+          </Button>
+        </>
+      )}
+      <WalletDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        pendingTransactions={pending}
+        confirmedTransactions={confirmed}
+      />
     </>
   );
 }

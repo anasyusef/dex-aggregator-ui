@@ -18,6 +18,7 @@
     "@mui/icons-material": "^5.6.1",
     "@mui/lab": "^5.0.0-alpha.78",
     "@mui/material": "^5.6.1",
+    "@mui/styles": "^5.6.2",
     "@reduxjs/toolkit": "^1.8.1",
     "@uniswap/redux-multicall": "^1.1.1",
     "@uniswap/router-sdk": "^1.0.5",
