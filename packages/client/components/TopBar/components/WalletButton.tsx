@@ -10,6 +10,7 @@ import { ProviderIcon } from "components";
 import { CHAIN_INFO } from "constants/chainInfo";
 import { SupportedChainId } from "constants/chains";
 import { useActiveWeb3, useWeb3 } from "contexts/Web3Provider";
+import { useNativeCurrencyBalances } from "hooks/useCurrencyBalance";
 import useNativeCurrencyBalance from "hooks/useNativeCurrencyBalance";
 import { useMemo, useState } from "react";
 import {
@@ -23,9 +24,18 @@ import WalletDialog from "./WalletDialog";
 type Props = {};
 
 export default function Wallet({}: Props) {
-  const { connect, isAccountActive, account, chainId, isNetworkSupported } =
-    useActiveWeb3();
-  const { loading, formattedBalance } = useNativeCurrencyBalance();
+  const {
+    connect,
+    isAccountActive,
+    account,
+    chainId,
+    isNetworkSupported,
+    library,
+  } = useActiveWeb3();
+  const userEthBalance = useNativeCurrencyBalances(account ? [account] : [])?.[
+    account ?? ""
+  ];
+
   const [open, setOpen] = useState(false);
 
   const handleConnect = async () => {
@@ -68,6 +78,11 @@ export default function Wallet({}: Props) {
     );
   }
 
+  const handles = async () => {
+    if (!library || !account) return;
+    console.log(await library.getBalance(account));
+  };
+
   const { nativeCurrency } = CHAIN_INFO[chainId];
 
   return (
@@ -82,6 +97,7 @@ export default function Wallet({}: Props) {
         </Button>
       ) : (
         <>
+          <Button onClick={handles}>Click</Button>
           <Button
             endIcon={<ProviderIcon />}
             onClick={() => setOpen(true)}
@@ -93,8 +109,9 @@ export default function Wallet({}: Props) {
               gap={2}
             >
               <Typography variant="button">
-                {Math.round(+formattedBalance * 10) / 10}{" "}
-                {nativeCurrency.symbol}
+                {account &&
+                  userEthBalance &&
+                  `${userEthBalance.toSignificant(3)} ${nativeCurrency.symbol}`}
               </Typography>
               {shortenAddress(account as string)}
             </Stack>
