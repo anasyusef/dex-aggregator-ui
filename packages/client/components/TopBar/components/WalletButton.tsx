@@ -78,11 +78,6 @@ export default function Wallet({}: Props) {
     );
   }
 
-  const handles = async () => {
-    if (!library || !account) return;
-    console.log(await library.getBalance(account));
-  };
-
   const { nativeCurrency } = CHAIN_INFO[chainId];
 
   return (
@@ -97,7 +92,6 @@ export default function Wallet({}: Props) {
         </Button>
       ) : (
         <>
-          <Button onClick={handles}>Click</Button>
           <Button
             endIcon={<ProviderIcon />}
             onClick={() => setOpen(true)}
