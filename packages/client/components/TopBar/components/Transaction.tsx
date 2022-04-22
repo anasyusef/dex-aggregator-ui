@@ -5,6 +5,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useActiveWeb3 } from "contexts/Web3Provider";
 import { useAllTransactions } from "state/transactions/hooks";
 import TransactionSummary from "@/components/TransactionSummary";
+import { ExplorerDataType, getExplorerLink } from "utils/getExplorerLink";
 
 type Props = {
   hash: string;
@@ -31,7 +32,12 @@ export default function Transaction({ hash }: Props) {
       alignContent={"center"}
       justifyContent={"space-between"}
     >
-      <TransactionSummary variant="subtitle2" info={info} />
+      <Link
+        target={"_blank"}
+        href={getExplorerLink(chainId, hash, ExplorerDataType.TRANSACTION)}
+      >
+        <TransactionSummary variant="subtitle2" info={info} />
+      </Link>
       <Box
         display={"flex"}
         alignContent="center"
