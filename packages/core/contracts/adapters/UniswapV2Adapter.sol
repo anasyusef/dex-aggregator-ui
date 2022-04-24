@@ -6,6 +6,7 @@ import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IWETH.sol";
 import "../libraries/Utils.sol";
 import "../interfaces/ISwapper.sol";
+// import "../libraries/UniswapV2Library.sol";
 import "./AdapterStorage.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -31,9 +32,32 @@ contract UniswapV2Adapter is AdapterStorage {
         require(routers[routerId] != address(0), "Router not registered");
         IUniswapV2Router02 router = IUniswapV2Router02(routers[routerId]);
         IERC20 tokenToSell = IERC20(path[0]);
-        console.log("TokentoSell: %s ; amountIn: %s", address(tokenToSell), amountIn);
+        console.log(
+            "TokentoSell: %s ; amountIn: %s",
+            address(tokenToSell),
+            amountIn
+        );
         swapper.transferFrom(tokenToSell, from, address(this), amountIn);
         assert(tokenToSell.approve(address(router), amountIn));
+
+        uint256 balance = tokenToSell.balanceOf(address(this));
+        console.log("Balance of this contract WETH: %s", balance);
+
+        for (uint256 index = 0; index < path.length; index++) {
+            console.log("Token address: %s", path[index]);
+        }
+
+        // uint256[] memory amountsTest = UniswapV2Library.getAmountsOut(
+        //     router.factory(),
+        //     amountIn,
+        //     path
+        // );
+
+        // console.log(
+        //     "Last amount from getAmountsOut: %s",
+        //     amountsTest[amountsTest.length - 1]
+        // );
+        // console.log("AmountOutMin: %s", amountOut);
 
         amounts = router.swapExactTokensForTokens(
             amountIn,

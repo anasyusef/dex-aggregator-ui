@@ -1,0 +1,30 @@
+INFO:  latexindent version 3.16, 2022-03-13, a script to indent .tex files
+       latexindent lives here: /usr/local/texlive/2022/texmf-dist/scripts/latexindent/
+       Sat Apr 23 03:22:27 2022
+       Filename: hello
+INFO:  Processing switches:
+INFO:  Directory for backup files and indent.log: .
+INFO:  YAML settings read: defaultSettings.yaml
+       Reading defaultSettings.yaml from /usr/local/texlive/2022/texmf-dist/scripts/latexindent/defaultSettings.yaml
+INFO:  YAML settings read: indentconfig.yaml or .indentconfig.yaml
+       Home directory is /Users/anasyusef (didn't find either indentconfig.yaml or .indentconfig.yaml)
+       To specify user settings you would put indentconfig.yaml here: /Users/anasyusef/indentconfig.yaml
+       Alternatively, you can use the hidden file .indentconfig.yaml as: /Users/anasyusef/.indentconfig.yaml
+INFO:  File extension work:
+       latexindent called to act upon hello without a file extension;
+       searching for files in the following order (see fileExtensionPreference):
+       hello.tex
+       hello.sty
+       hello.cls
+       hello.bib
+FATAL I couldn't find a match for hello in fileExtensionPreference (see defaultSettings.yaml)
+      I searched for hello.tex
+      I searched for hello.sty
+      I searched for hello.cls
+      I searched for hello.bib
+      but couldn't find any of them.
+      Consider updating fileExtensionPreference.
+FATAL Exiting, no indendation done.
+       --------------
+INFO:  Please direct all communication/issues to:
+        https://github.com/cmhughes/latexindent.pl

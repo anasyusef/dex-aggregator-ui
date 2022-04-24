@@ -8,14 +8,12 @@ import {
 } from "@mui/material";
 import { ProviderIcon } from "components";
 import { CHAIN_INFO } from "constants/chainInfo";
-import { SupportedChainId } from "constants/chains";
-import { useActiveWeb3, useWeb3 } from "contexts/Web3Provider";
+import { useActiveWeb3 } from "contexts/Web3Provider";
 import { useNativeCurrencyBalances } from "hooks/useCurrencyBalance";
-import useNativeCurrencyBalance from "hooks/useNativeCurrencyBalance";
 import { useMemo, useState } from "react";
 import {
-  useAllTransactions,
   isTransactionRecent,
+  useAllTransactions,
 } from "state/transactions/hooks";
 import { TransactionDetails } from "state/transactions/reducer";
 import { shortenAddress } from "utils";
@@ -120,7 +118,4 @@ export default function Wallet({}: Props) {
       />
     </>
   );
-}
-function useeNativeCurrencyBalance() {
-  throw new Error("Function not implemented.");
 }

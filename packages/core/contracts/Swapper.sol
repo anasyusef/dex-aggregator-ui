@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IUniswapV2Pair.sol";
-import "./libraries/UniswapV2Library.sol";
 import "./libraries/Utils.sol";
 import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IWETH.sol";
@@ -12,6 +11,7 @@ import "./interfaces/IExecutor.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -153,31 +153,37 @@ contract Swapper is Ownable, ISwapper {
         external
         payable
     {
-        require(params.srcToken != params.destToken, "src token == dest token");
+        // Revert the transaction if the source token is not eth and some eth was sent along with the transaction.
+        require(
+            params.srcToken == Utils.ETH ? msg.value > 0 : msg.value == 0,
+            "no value should be sent"
+        );
         address from;
         address to = params.to;
         (params.srcToken, from) = _wrapETH(params.amountIn, params.srcToken);
+
         if (params.destToken == Utils.ETH) {
+            // We change the address to be this contract's address when swapping to ether since we need unwrap WETH => ETH and then send it to the user
             to = address(this);
         }
-        require(
-            params.srcToken != Utils.ETH && msg.value > 0,
-            "no value should be sent"
-        );
+        uint256 totalAmountsOut = 0;
         for (uint256 i = 0; i < params.swaps.length; i++) {
             SwapStep memory swapParams = params.swaps[i];
-            uint256 swapParamsPathLength = swapParams.path.length;
             require(
                 adapters[swapParams.adapterId] != address(0),
                 "Adapter not registered"
             );
+            require(swapParams.path.length >= 2, "Invalid path");
             console.log(
                 "Path 0: %s | SrcToken: %s",
                 swapParams.path[0],
                 params.srcToken
             );
+            address destSwapToken = swapParams.path[swapParams.path.length - 1];
+            bool isSwappingETH = destSwapToken == Utils.WETH &&
+                params.destToken == Utils.ETH;
             require(
-                swapParams.path[swapParamsPathLength - 1] == params.destToken,
+                destSwapToken == params.destToken || isSwappingETH,
                 "destToken doesn't match"
             );
 
@@ -190,6 +196,8 @@ contract Swapper is Ownable, ISwapper {
             // (swapParams.path[i], from) = _wrapETH(amountIn, swapParams.path[i]); // TODO - Only change to check for the first and last tokens
             // TODO - Check if ETH is only at the beginning or end, if it's in the middle path then very unlikely that will result in an optimal path
             IAdapter adapter = IAdapter(adapters[swapParams.adapterId]);
+            console.log("From: %s; AmountIn", from, amountIn);
+
             uint256[] memory amounts = adapter.swapExactInput(
                 swapParams.routerId,
                 amountIn,
@@ -199,6 +207,8 @@ contract Swapper is Ownable, ISwapper {
                 to,
                 swapParams.deadline
             );
+            console.log("Temp total amounts out: %s", totalAmountsOut);
+            totalAmountsOut += amounts[amounts.length - 1];
             console.log("Output amounts...");
             for (uint256 j = 0; j < amounts.length; j++) {
                 console.log(amounts[i]);
@@ -215,7 +225,8 @@ contract Swapper is Ownable, ISwapper {
             );
         }
         if (params.destToken == Utils.ETH) {
-            // TODO - Calculate Total ETH to send back
+            IWETH(Utils.WETH).withdraw(totalAmountsOut);
+            payable(from).transfer(totalAmountsOut);
         }
     }
 
