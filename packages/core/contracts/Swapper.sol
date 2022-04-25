@@ -82,6 +82,10 @@ contract Swapper is Ownable, ISwapper {
         if (from == address(this)) {
             assert(IERC20(Utils.WETH).approve(address(adapter), amountIn));
         }
+        // console.log(
+        //     "Final balance of the contract ETH: %s",
+        //     address(this).balance
+        // );
         return
             adapter.swapExactInput(
                 routerId,
@@ -92,6 +96,7 @@ contract Swapper is Ownable, ISwapper {
                 to,
                 deadline
             );
+
     }
 
     function simpleSwapExactInputSingle(
@@ -111,6 +116,10 @@ contract Swapper is Ownable, ISwapper {
         if (from == address(this)) {
             assert(IERC20(Utils.WETH).approve(address(adapter), amountIn));
         }
+        // console.log(
+        //     "Final balance of the contract ETH: %s",
+        //     address(this).balance
+        // );
         return
             adapter.swapExactInputSingle(
                 routerId,
@@ -122,6 +131,7 @@ contract Swapper is Ownable, ISwapper {
                 to,
                 deadline
             );
+
     }
 
     /// @notice Wraps ETH to WETH
@@ -160,6 +170,7 @@ contract Swapper is Ownable, ISwapper {
         );
         address from;
         address to = params.to;
+        console.log("Dest token beginning: %s", params.destToken);
         (params.srcToken, from) = _wrapETH(params.amountIn, params.srcToken);
 
         if (params.destToken == Utils.ETH) {
@@ -180,23 +191,21 @@ contract Swapper is Ownable, ISwapper {
                 params.srcToken
             );
             address destSwapToken = swapParams.path[swapParams.path.length - 1];
-            bool isSwappingETH = destSwapToken == Utils.WETH &&
-                params.destToken == Utils.ETH;
+
+            // Check if the dest token matches the last token on the swap and if the dest token is ETH the last token on the path must be WETH
             require(
-                destSwapToken == params.destToken || isSwappingETH,
+                destSwapToken == params.destToken ||
+                    (destSwapToken == Utils.WETH &&
+                        params.destToken == Utils.ETH),
                 "destToken doesn't match"
             );
 
             // Add checkers on the percentage
             // require(swapParams.percent > 0 && swapParams.percent <= 100, "percent not valid");
             uint256 amountIn = (params.amountIn / 100) * swapParams.percent; // TODO - Fix percentage calculation
-            console.log("Amount in: %s", amountIn);
-            console.log("Minimum amount out: %s", swapParams.amountOut);
-            console.log("From address: %s", from);
             // (swapParams.path[i], from) = _wrapETH(amountIn, swapParams.path[i]); // TODO - Only change to check for the first and last tokens
             // TODO - Check if ETH is only at the beginning or end, if it's in the middle path then very unlikely that will result in an optimal path
             IAdapter adapter = IAdapter(adapters[swapParams.adapterId]);
-            console.log("From: %s; AmountIn", from, amountIn);
 
             uint256[] memory amounts = adapter.swapExactInput(
                 swapParams.routerId,
@@ -207,13 +216,7 @@ contract Swapper is Ownable, ISwapper {
                 to,
                 swapParams.deadline
             );
-            console.log("Temp total amounts out: %s", totalAmountsOut);
             totalAmountsOut += amounts[amounts.length - 1];
-            console.log("Output amounts...");
-            for (uint256 j = 0; j < amounts.length; j++) {
-                console.log(amounts[i]);
-            }
-            console.log("Emitting event...");
             emit Swap(
                 msg.sender,
                 params.to,
@@ -224,10 +227,16 @@ contract Swapper is Ownable, ISwapper {
                 swapParams.percent
             );
         }
+
         if (params.destToken == Utils.ETH) {
             IWETH(Utils.WETH).withdraw(totalAmountsOut);
-            payable(from).transfer(totalAmountsOut);
+            payable(msg.sender).transfer(totalAmountsOut);
         }
+
+        // console.log(
+        //     "Final balance of the contract ETH: %s",
+        //     address(this).balance
+        // );
     }
 
     function multiSwapExactOutput() external payable {

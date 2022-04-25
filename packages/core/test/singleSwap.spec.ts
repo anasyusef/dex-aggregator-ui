@@ -580,16 +580,20 @@ describe("Swap", function () {
       ],
       to: owner.address,
     });
-    /* eslint-enable camelcase */
-    const newOwnerBalance = await owner.getBalance();
-    const formattedFinalBalance = ethers.utils.formatEther(newOwnerBalance);
-    const formattedTotalMinimumOut = ethers.utils.formatEther(
-      totalMinimumOut.raw.toString()
-    );
 
-    expect(+formattedFinalBalance).to.be.greaterThanOrEqual(
-      +formattedTotalMinimumOut
-    );
+    /* eslint-enable camelcase */
+    const swapBalance = await provider.getBalance(swap.address);
+    const newOwnerBalance = await owner.getBalance();
+    // const formattedFinalBalance = ethers.utils.formatEther(newOwnerBalance);
+    // const formattedTotalMinimumOut = ethers.utils.formatEther(
+    //   totalMinimumOut.raw.toString()
+    // );
+
+    // expect(+formattedFinalBalance).to.be.greaterThanOrEqual(
+    //   +formattedTotalMinimumOut
+    // );
+
+    expect(swapBalance.toString()).to.equal("0");
   });
   it("should perform multi swaps where the source token is ERC20", async () => {});
   it("should not perform multi swaps where ETH is in the middle path", async () => {});
