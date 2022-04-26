@@ -12,23 +12,33 @@ import {
   OutlinedInput,
   Stack,
   Typography,
+  useTheme
 } from "@mui/material";
 import { Box } from "@mui/system";
 import React, { useState } from "react";
-import { useGetTokensListQuery } from "state/tokenListsApi";
+import { useGetTokensListQuery } from "state/lists/tokenListsApi";
 import { TokenInfo } from "@uniswap/token-lists";
-import TokensList from "./components/TokensList";
+import CurrencyList from "./components/CurrencyList";
+import { tokensToChainTokenMap } from "hooks/useTokenList/utils";
+import { Currency } from "@uniswap/sdk-core";
 
 export interface Props {
   open: boolean;
-  selectedToken?: TokenInfo;
+  selectedCurrency?: Currency | null;
   onClose: () => void;
-  onSelectToken: (value: TokenInfo) => void;
+  onCurrencySelect: (value: Currency) => void;
 }
 
 export default function CurrencyDialog(props: Props) {
-  const { onClose, onSelectToken, selectedToken, open } = props;
-  const { data, isLoading, isSuccess } = useGetTokensListQuery("");
+  const {
+    onClose,
+    onCurrencySelect: onSelectToken,
+    selectedCurrency: selectedToken,
+    open,
+  } = props;
+
+  const theme = useTheme()
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleClose = () => {
@@ -36,7 +46,7 @@ export default function CurrencyDialog(props: Props) {
     setSearchTerm("");
   };
 
-  const handleTokenItemClick = (value: TokenInfo) => {
+  const handleTokenItemClick = (value: Currency) => {
     onSelectToken(value);
     setSearchTerm("");
   };
@@ -44,7 +54,7 @@ export default function CurrencyDialog(props: Props) {
   return (
     <Dialog scroll="paper" fullWidth onClose={handleClose} open={open}>
       <Box
-        sx={{ backgroundColor: (theme) => theme.palette.background.default }}
+        sx={{ backgroundColor: theme.palette.background.default }}
       >
         <DialogTitle sx={{ position: "sticky", top: "12px" }}>
           Select a token
@@ -89,13 +99,13 @@ export default function CurrencyDialog(props: Props) {
         </Stack>
       </ListSubheader>
       <DialogContent dividers>
-        <TokensList
-          selectedToken={selectedToken}
-          onTokenItemClick={handleTokenItemClick}
+        <CurrencyList
+          selectedCurrency={selectedToken}
+          onCurrencySelect={handleTokenItemClick}
           searchTerm={searchTerm}
-          isLoading={isLoading}
-          data={data?.tokens}
-          isSuccess={isSuccess as any}
+          // isLoading={isLoading}
+          // data={data?.tokens}
+          // isSuccess={isSuccess as any}
         />
       </DialogContent>
     </Dialog>

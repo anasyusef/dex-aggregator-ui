@@ -15,7 +15,7 @@ import { unstable_useEnhancedEffect as useEnhancedEffect } from "@mui/material/u
 import { capitalize } from "lodash";
 import { useDispatch } from "react-redux";
 import { useAppSelector } from "state";
-import { selectMode, setMode } from "state/userSlice";
+import { selectMode, setMode } from "state/user/slice";
 import NetworkSelector from "./components/NetworkSelector";
 import WalletButton from "./components/WalletButton";
 import { useContext } from "react";

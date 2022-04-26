@@ -9,7 +9,7 @@ import { deepmerge } from "@mui/utils";
 import PropTypes from "prop-types";
 import * as React from "react";
 import { useAppSelector } from "state";
-import { selectMode } from "state/userSlice";
+import { selectMode } from "state/user/slice";
 import { getDesignTokens, getMetaThemeColor, getThemedComponents } from "theme";
 
 const themeInitialOptions = {

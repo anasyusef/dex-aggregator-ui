@@ -15,6 +15,11 @@ export const CHAIN_IDS_TO_NAMES = {
   [SupportedChainId.POLYGON_MUMBAI]: "polygon_mumbai",
 };
 
+export const SUPPORTED_GAS_ESTIMATE_CHAIN_IDS = [
+  SupportedChainId.MAINNET,
+  SupportedChainId.POLYGON,
+];
+
 /**
  * Array of all the supported chain IDs
  */

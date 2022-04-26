@@ -1,33 +1,43 @@
-import { configureStore, applyMiddleware } from "@reduxjs/toolkit";
+import { configureStore } from "@reduxjs/toolkit";
+import { setupListeners } from "@reduxjs/toolkit/query/react";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import { tokensApi } from "./lists/tokenListsApi";
+import multicall from "./multicall";
+import swap from "./swap/reducer";
+import transactions from "./transactions/reducer";
+import user from "./user/slice";
+import app from "./application/slice";
+import web3 from "./web3Slice";
+import { routingApi } from "./routing/slice";
 import { save, load } from "redux-localstorage-simple";
-import web3Reducer from "./web3Slice";
-import userReducer from "./userSlice";
-import swapReducer from "./swapSlice";
-import { tokensApi } from "./tokenListsApi";
-// ...
 
-const PERSISTED_KEYS: string[] = ["user"];
+const PERSISTED_KEYS: string[] = ["user", "transactions"];
 
 export function makeStore() {
   return configureStore({
     reducer: {
-      web3: web3Reducer,
-      user: userReducer,
-      swap: swapReducer,
+      web3,
+      app,
+      user,
+      swap,
+      transactions,
+
+      multicall: multicall.reducer,
       [tokensApi.reducerPath]: tokensApi.reducer,
+      [routingApi.reducerPath]: routingApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(tokensApi.middleware),
-    //   getDefaultMiddleware().concat(
-    //     save({ states: PERSISTED_KEYS, debounce: 400 })
-    //   ),
-    // preloadedState: load({ states: PERSISTED_KEYS }),
+      getDefaultMiddleware()
+        .concat(tokensApi.middleware)
+        .concat(routingApi.middleware)
+        .concat(save({ states: PERSISTED_KEYS, debounce: 400 })),
+    preloadedState: load({ states: PERSISTED_KEYS, disableWarnings: true }),
   });
 }
 
 const store = makeStore();
 
+setupListeners(store.dispatch);
 export default store;
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
