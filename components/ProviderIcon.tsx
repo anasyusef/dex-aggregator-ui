@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default function ProviderIcon({ height = 20, width = 20 }: Props) {
-  const { account, provider } = useWeb3();
+  const { account, library: provider } = useWeb3();
   if (!provider || !account) return null;
 
   const providerName = getProviderName(provider.provider);

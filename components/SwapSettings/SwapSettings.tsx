@@ -2,6 +2,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import {
   FormControl,
   FormHelperText,
+  Grid,
   IconButton,
   InputAdornment,
   InputLabel,
@@ -9,121 +10,112 @@ import {
   Popover,
   Stack,
   ToggleButton,
-  ToggleButtonGroup,
   Typography,
-  OutlinedInputProps,
 } from "@mui/material";
-import React from "react";
-import { ChangeEvent } from "react";
-import { useState } from "react";
-import { useAppDispatch, useAppSelector } from "state";
+import { Percent } from "@uniswap/sdk-core";
+import { DEFAULT_DEADLINE_FROM_NOW } from "constants/misc";
+import React, { useState } from "react";
 import {
-  GasMode,
-  setGasMode,
-  setSlippageTolerance,
-  setTransactionDeadline,
-} from "state/userSlice";
+  useSetUserSlippageTolerance,
+  useUserSlippageTolerance,
+  useUserTransactionTTL,
+} from "state/user/hooks";
 
-type Props = {};
+type Props = {
+  placeholderSlippage: Percent;
+};
 
-function isSlippageToleranceWarning(
-  slippageTolerance: string
-): [boolean, string?] {
-  if (slippageTolerance === "") return [false];
-  const parsedSlippageTolerance = +slippageTolerance;
-  const isFrontrun =
-    parsedSlippageTolerance > 1 && parsedSlippageTolerance <= 50;
-  const mayFail =
-    parsedSlippageTolerance >= 0 && parsedSlippageTolerance < 0.05;
-
-  if (isFrontrun) return [true, "Your transaction may be frontrun"];
-  if (mayFail) return [true, "Your transaction may fail"];
-  return [false];
+enum SlippageError {
+  InvalidInput = "InvalidInput",
 }
 
-function isSlippageToleranceError(slippageTolerance: string) {
-  if (slippageTolerance === "") return true;
-  const parsedSlippageTolerance = +slippageTolerance;
-  return (
-    Number.isNaN(parsedSlippageTolerance) ||
-    parsedSlippageTolerance > 50 ||
-    parsedSlippageTolerance < 0
-  );
+enum DeadlineError {
+  InvalidInput = "InvalidInput",
 }
 
-function isTransactionTTLError(transactionTTL: string) {
-  const parsedTransactionTTL = +transactionTTL;
-  return (
-    Number.isNaN(parsedTransactionTTL) ||
-    parsedTransactionTTL <= 0 ||
-    parsedTransactionTTL > 4320 ||
-    parsedTransactionTTL < 1
-  );
-}
+const THREE_DAYS_IN_SECONDS = 4320;
 
-export default function SwapSettings({}: Props) {
+export default function SwapSettings({ placeholderSlippage }: Props) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
 
-  const { transactionDeadline, gasMode, slippageTolerance } = useAppSelector(
-    (state) => state.user
-  );
-  const [slippageToleranceState, setSlippageToleranceState] = useState<string>(
-    slippageTolerance.toString()
-  );
-  const [transactionTTL, setTransactionTTL] = useState(
-    transactionDeadline.toString()
-  );
-  const dispatch = useAppDispatch();
+  const userSlippageTolerance = useUserSlippageTolerance();
+  const setSlippageTolerance = useSetUserSlippageTolerance();
 
-  let slippageInputColor: OutlinedInputProps["color"] = "primary";
+  const [slippageError, setSlippageError] = useState<SlippageError | false>(
+    false
+  );
+  const [slippageInput, setSlippageInput] = useState<string>("");
 
-  if (isSlippageToleranceError(slippageToleranceState)) {
-    slippageInputColor = "error";
-  } else if (isSlippageToleranceWarning(slippageToleranceState)[0]) {
-    slippageInputColor = "warning";
-  }
+  const [deadline, setDeadline] = useUserTransactionTTL();
+
+  const [deadlineInput, setDeadlineInput] = useState("");
+  const [deadlineError, setDeadlineError] = useState<DeadlineError | false>(
+    false
+  );
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
   const handleClose = () => {
-    const isErrorSlippageTolerance = isSlippageToleranceError(
-      slippageToleranceState
-    );
-    const isErrorTransactionTTL = isTransactionTTLError(transactionTTL);
-    if (!isErrorSlippageTolerance) {
-      dispatch(setSlippageTolerance(slippageToleranceState));
-    } else {
-      setSlippageToleranceState(slippageTolerance.toString());
-    }
-
-    if (!isErrorTransactionTTL) {
-      dispatch(setTransactionDeadline(transactionTTL));
-    } else {
-      setTransactionTTL(transactionDeadline.toString());
-    }
     setAnchorEl(null);
   };
 
-  const handleGasMode = (
-    event: React.MouseEvent<HTMLElement>,
-    newGasMode: GasMode | null
-  ) => {
-    if (newGasMode) {
-      dispatch(setGasMode(newGasMode));
+  function parseSlippageInput(value: string) {
+    // populate what the user typed and clear the error
+    setSlippageInput(value);
+    setSlippageError(false);
+
+    if (value.length === 0) {
+      setSlippageTolerance("auto");
+    } else {
+      const parsed = Math.floor(Number.parseFloat(value) * 100);
+
+      if (!Number.isInteger(parsed) || parsed < 0 || parsed > 5000) {
+        setSlippageTolerance("auto");
+        if (value !== ".") {
+          setSlippageError(SlippageError.InvalidInput);
+        }
+      } else {
+        setSlippageTolerance(new Percent(parsed, 10_000));
+      }
     }
-  };
+  }
 
-  const handleSlippageToleranceChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSlippageToleranceState(e.target.value);
-  };
+  function parseCustomDeadline(value: string) {
+    // populate what the user typed and clear the error
+    setDeadlineInput(value);
+    setDeadlineError(false);
 
-  const handleTransactionTTLChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setTransactionTTL(e.target.value);
-  };
+    if (value.length === 0) {
+      setDeadline(DEFAULT_DEADLINE_FROM_NOW);
+    } else {
+      try {
+        const parsed: number = Math.floor(Number.parseFloat(value) * 60);
+        if (
+          !Number.isInteger(parsed) ||
+          parsed < 60 ||
+          parsed > THREE_DAYS_IN_SECONDS
+        ) {
+          setDeadlineError(DeadlineError.InvalidInput);
+        } else {
+          setDeadline(parsed);
+        }
+      } catch (error) {
+        console.error(error);
+        setDeadlineError(DeadlineError.InvalidInput);
+      }
+    }
+  }
+
+  const tooLow =
+    userSlippageTolerance !== "auto" &&
+    userSlippageTolerance.lessThan(new Percent(5, 10_000));
+  const tooHigh =
+    userSlippageTolerance !== "auto" &&
+    userSlippageTolerance.greaterThan(new Percent(1, 100));
 
   const open = Boolean(anchorEl);
   const id = open ? "settings-popover" : undefined;
@@ -155,30 +147,62 @@ export default function SwapSettings({}: Props) {
             p: 2,
           }}
         >
-          <FormControl size="small" variant="outlined">
-            <InputLabel htmlFor="slippage-tolerance-input">
-              Slippage tolerance
-            </InputLabel>
-            <OutlinedInput
+          <Grid container spacing={1}>
+            <Grid item xs={3}>
+              <ToggleButton
               size="small"
-              id="slippage-tolerance-input"
-              error={isSlippageToleranceError(slippageToleranceState)}
-              color={slippageInputColor}
-              onChange={handleSlippageToleranceChange}
-              value={slippageToleranceState}
-              placeholder={"0.10"}
-              endAdornment={<InputAdornment position="end">%</InputAdornment>}
-              label="Slippage tolerance"
-            />
-            {isSlippageToleranceWarning(slippageToleranceState)[0] && (
-              <FormHelperText>
-                {isSlippageToleranceWarning(slippageToleranceState)[1]}
-              </FormHelperText>
-            )}
-            {isSlippageToleranceError(slippageToleranceState) && (
-              <FormHelperText error>Invalid slippage tolerance</FormHelperText>
-            )}
-          </FormControl>
+              fullWidth
+                selected={userSlippageTolerance === "auto"}
+                onClick={() => parseSlippageInput("")}
+                value={"auto"}
+              >
+                Auto
+              </ToggleButton>
+            </Grid>
+            <Grid item xs={9}>
+              <FormControl size="small" variant="outlined">
+                <InputLabel htmlFor="slippage-tolerance-input">
+                  Slippage tolerance
+                </InputLabel>
+                <OutlinedInput
+                  size="small"
+                  id="slippage-tolerance-input"
+                  error={!!slippageError}
+                  color={tooLow || tooHigh ? "warning" : "primary"}
+                  onChange={(e) => parseSlippageInput(e.target.value)}
+                  value={
+                    slippageInput.length > 0
+                      ? slippageInput
+                      : userSlippageTolerance === "auto"
+                      ? ""
+                      : userSlippageTolerance.toFixed(2)
+                  }
+                  onBlur={() => {
+                    setSlippageInput("");
+                    setSlippageError(false);
+                  }}
+                  placeholder={placeholderSlippage.toFixed(2)}
+                  endAdornment={
+                    <InputAdornment position="end">%</InputAdornment>
+                  }
+                  label="Slippage tolerance"
+                />
+                {slippageError || tooLow || tooHigh ? (
+                  slippageError ? (
+                    <FormHelperText error>
+                      Enter a valid slippage percentage
+                    </FormHelperText>
+                  ) : tooLow ? (
+                    <FormHelperText>Your transaction may fail</FormHelperText>
+                  ) : (
+                    <FormHelperText>
+                      Your transaction may be frontrun
+                    </FormHelperText>
+                  )
+                ) : null}
+              </FormControl>
+            </Grid>
+          </Grid>
           <FormControl size="small" variant="outlined">
             <InputLabel htmlFor="transaction-deadline-input">
               Transaction deadline
@@ -186,13 +210,23 @@ export default function SwapSettings({}: Props) {
             <OutlinedInput
               size="small"
               id="transaction-deadline-input"
-              error={isTransactionTTLError(transactionTTL)}
-              onChange={handleTransactionTTLChange}
-              placeholder={"30"}
-              value={transactionTTL}
+              error={!!deadlineError}
+              onChange={(e) => parseCustomDeadline(e.target.value)}
+              placeholder={(DEFAULT_DEADLINE_FROM_NOW / 60).toString()}
+              value={
+                deadlineInput.length > 0
+                  ? deadlineInput
+                  : deadline === DEFAULT_DEADLINE_FROM_NOW
+                  ? ""
+                  : (deadline / 60).toString()
+              }
               endAdornment={
                 <InputAdornment position="end">minutes</InputAdornment>
               }
+              onBlur={() => {
+                setDeadlineInput("");
+                setDeadlineError(false);
+              }}
               label="Transaction deadline"
             />
           </FormControl>
@@ -201,26 +235,7 @@ export default function SwapSettings({}: Props) {
             justifyContent="space-between"
             alignItems="center"
             direction="row"
-          >
-            <Typography>Gas price</Typography>
-            <ToggleButtonGroup
-              value={gasMode}
-              exclusive
-              size="small"
-              onChange={handleGasMode}
-              aria-label="text alignment"
-            >
-              <ToggleButton value="normal" aria-label="normal">
-                Normal
-              </ToggleButton>
-              <ToggleButton value="fast" aria-label="fast">
-                Fast
-              </ToggleButton>
-              <ToggleButton value="instant" aria-label="instant">
-                Instant
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Stack>
+          ></Stack>
         </Stack>
       </Popover>
     </>

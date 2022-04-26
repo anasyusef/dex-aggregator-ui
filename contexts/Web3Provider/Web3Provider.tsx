@@ -17,7 +17,7 @@ import { ethers, providers } from "ethers";
 import { ALL_SUPPORTED_CHAIN_IDS } from "constants/chains";
 
 interface IWeb3State {
-  provider?: ethers.providers.Web3Provider;
+  library?: ethers.providers.Web3Provider;
   account?: string;
   chainId?: number;
   signer?: ethers.providers.JsonRpcSigner;
@@ -166,7 +166,7 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
       value={{
         account,
         connect,
-        provider: provider.current,
+        library: provider.current,
         isAccountActive: !!account,
         chainId,
         disconnect,
