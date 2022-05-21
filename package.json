@@ -46,7 +46,8 @@
     "react-redux": "^7.2.8",
     "redux-localstorage-simple": "^2.5.0",
     "styled-components": "^5.3.5",
-    "web3modal": "^1.9.6"
+    "web3modal": "^1.9.6",
+    "yup": "^0.32.11"
   },
   "engines": {
     "node": ">=14.0.0"
