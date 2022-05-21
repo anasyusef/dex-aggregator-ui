@@ -116,7 +116,7 @@ export function useUserHasSubmittedClaim(account?: string): {
     const txnIndex = Object.keys(allTransactions).find((hash) => {
       const tx = allTransactions[hash];
       return (
-        tx.info.type === TransactionType.CLAIM && tx.info.recipient === account
+        tx.info.type === (TransactionType as any).CLAIM && (tx.info as any).recipient === account
       );
     });
     return txnIndex && allTransactions[txnIndex]
