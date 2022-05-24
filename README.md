@@ -1,7 +1,5 @@
 # DEX Aggregator UI
 
-## Getting Started
-
 To install all the required packages, run:
 
 ```shell
