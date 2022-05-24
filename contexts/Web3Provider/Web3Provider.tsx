@@ -57,7 +57,7 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
       coinbasewallet: {
         package: CoinbaseWalletSDK, // Required
         options: {
-          appName: "My Awesome App", // Required
+          appName: "DEX Aggregator", // Required
           infuraId: INFURA_ID, // Required
           rpc: "", // Optional if `infuraId` is provided; otherwise it's required
           chainId: 1, // Optional. It defaults to 1 if not provided
@@ -101,8 +101,12 @@ export default function Web3Provider({ children }: { children: ReactNode }) {
   const setup = useCallback(async () => {
     const web3Modal = getWeb3Modal();
     if (web3Modal.cachedProvider) {
-      const connection = await web3Modal.connect();
-      await handleConnect(connection);
+      try {
+        const connection = await web3Modal.connect();
+        await handleConnect(connection);
+      } catch(e) {
+        console.error(e)
+      }
     }
   }, [getWeb3Modal]);
 

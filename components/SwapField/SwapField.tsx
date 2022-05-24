@@ -140,7 +140,8 @@ export default function SwapField({
           justifyContent={"end"}
           sx={{ mr: 2 }}
           item
-          xs={5}
+          xs={12}
+          md={5}
         >
           <Stack display={"flex"} alignItems={"end"} spacing={0.5}>
             <Button
