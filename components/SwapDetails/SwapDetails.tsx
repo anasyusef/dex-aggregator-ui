@@ -1,3 +1,5 @@
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import InfoIconOutlined from "@mui/icons-material/InfoOutlined";
 import {
   Accordion,
   AccordionDetails,
@@ -5,25 +7,23 @@ import {
   Button,
   CircularProgress,
   IconButton,
-  Skeleton,
   Stack,
   styled,
   Typography,
   useTheme,
 } from "@mui/material";
 import Tooltip, { tooltipClasses, TooltipProps } from "@mui/material/Tooltip";
-import { Percent, Currency, TradeType } from "@uniswap/sdk-core";
-import { useActiveWeb3 } from "contexts/Web3Provider";
-import React, { useState } from "react";
-import { InterfaceTrade } from "state/routing/types";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Currency, Percent, TradeType } from "@uniswap/sdk-core";
 import { SUPPORTED_GAS_ESTIMATE_CHAIN_IDS } from "constants/chains";
-import TradePrice from "./components/TradePrice";
-import GasEstimateBadge from "./components/GasEstimateBadge";
-import InfoIconOutlined from "@mui/icons-material/InfoOutlined";
+import { useActiveWeb3 } from "contexts/Web3Provider";
+import React, { useEffect, useState } from "react";
+import { InterfaceTrade } from "state/routing/types";
+import { Field } from "state/swap/actions";
+import { useDerivedSwapInfo } from "state/swap/hooks";
 import AdvancedSwapDetails from "./components/AdvancedSwapDetails";
-import SwapRoute from "./components/SwapRoute";
+import GasEstimateBadge from "./components/GasEstimateBadge";
 import RouteDialog from "./components/RouteDialog";
+import TradePrice from "./components/TradePrice";
 
 type Props = {
   trade: InterfaceTrade<Currency, Currency, TradeType> | undefined;
@@ -52,10 +52,26 @@ export default function SwapDetails({
   setShowInverted,
   showInverted,
 }: Props) {
-  const theme = useTheme();
   const { chainId } = useActiveWeb3();
   const [showDetails, setShowDetails] = useState(false);
   const [open, setOpen] = useState(false);
+  const { currencies } = useDerivedSwapInfo();
+
+  const [steps, setSteps] = useState(2);
+
+  // add side effect to component
+  useEffect(() => {
+    // create interval
+    const interval = setInterval(
+      () => setSteps(Math.floor(Math.random() * 3 + 1)),
+      45000
+    );
+
+    // clean up interval on unmount
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <Stack>
@@ -137,11 +153,17 @@ export default function SwapDetails({
               setOpen(true);
             }}
           >
-            4 steps in the route
+            {steps} steps in the route
           </Button>
         </Stack>
       )}
-      <RouteDialog open={open} onClose={() => setOpen(false)} />
+      <RouteDialog
+        inputCurrency={currencies[Field.INPUT]}
+        outputCurrency={currencies[Field.OUTPUT]}
+        steps={steps}
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </Stack>
   );
 }
